@@ -69,8 +69,13 @@ export async function startSession({ target = 25, maxNew = 10 } = {}) {
     }
   }
 
-  // Sort new cards: priority to the first PRIORITY_LIMIT by deck order
-  newCards.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+  // Sort new cards by Memrise frequency level (1 = most frequent); fallback on deck order
+  newCards.sort((a, b) => {
+    const la = a.level ?? Infinity;
+    const lb = b.level ?? Infinity;
+    if (la !== lb) return la - lb;
+    return (a.order ?? Infinity) - (b.order ?? Infinity);
+  });
 
   const reviewSlots = Math.max(0, target - maxNew);
   const reviews = due.slice(0, reviewSlots);

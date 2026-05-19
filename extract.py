@@ -6,12 +6,21 @@ Usage:
     python3 extract.py 8000_most_common_swedish_words.apkg
 
 Produit :
-    - cards.json    : [{ id, swedish, english, audio_file }, ...]
-    - media/        : tous les fichiers audio renommés depuis leurs numéros
+    - cards.json    : [{ id, swedish, english, audio_file, level, pos, example, phonetic }]
+    - media/        : tous les fichiers audio renommés
+
+Spécifique au deck Memrise "8000 most common Swedish words" (4 sous-modèles).
+Structure des champs :
+    [0]  Swedish               ← recto
+    [1]  Swedish Alternatives  (conjugaisons)
+    [4]  English               ← verso
+    [8]  Pronunciation         (Part 1 uniquement)
+    [9]  Part of Speech        (Part 1, Part 2, Part 3) — [10] dans Part 4 ? non, c'est [9]
+    [10] Example               (Parts 2-4)
+    [12] Level                 (1 = mot le plus fréquent)
 """
 
 import json
-import os
 import re
 import shutil
 import sqlite3
@@ -24,15 +33,15 @@ AUDIO_RE = re.compile(r"\[sound:([^\]]+)\]")
 HTML_RE = re.compile(r"<[^>]+>")
 
 
-def clean(text: str) -> str:
-    """Strip HTML tags and [sound:] markers, collapse whitespace."""
+def clean(text):
     text = AUDIO_RE.sub("", text)
     text = HTML_RE.sub("", text)
     text = text.replace("&nbsp;", " ").replace("&amp;", "&")
     return " ".join(text.split()).strip()
 
 
-def extract_audio(fields):
+def extract_audio_from_fields(fields):
+    """Cherche [sound:xxx] dans tous les champs."""
     for f in fields:
         m = AUDIO_RE.search(f)
         if m:
@@ -40,7 +49,11 @@ def extract_audio(fields):
     return None
 
 
-def main(apkg_path: str) -> None:
+def safe(fields, idx):
+    return fields[idx] if idx < len(fields) else ""
+
+
+def main(apkg_path):
     apkg = Path(apkg_path).resolve()
     if not apkg.exists():
         sys.exit(f"Fichier introuvable: {apkg}")
@@ -55,16 +68,15 @@ def main(apkg_path: str) -> None:
         with zipfile.ZipFile(apkg, "r") as zf:
             zf.extractall(tmp_path)
 
-        # Anki stocke un mapping {numéro: nom_fichier_original} dans "media"
         media_map_file = tmp_path / "media"
         media_map = {}
         if media_map_file.exists():
             media_map = json.loads(media_map_file.read_text(encoding="utf-8"))
+        rev_map = {v: k for k, v in media_map.items()}
 
-        # Trouver la base SQLite (collection.anki2 ou .anki21)
         db_path = None
-        for candidate in ("collection.anki21", "collection.anki2"):
-            p = tmp_path / candidate
+        for c in ("collection.anki21", "collection.anki2"):
+            p = tmp_path / c
             if p.exists():
                 db_path = p
                 break
@@ -81,25 +93,28 @@ def main(apkg_path: str) -> None:
         copied = 0
         for note_id, flds in rows:
             fields = flds.split("\x1f")
-            if len(fields) < 2:
+            if len(fields) < 5:
                 continue
 
-            audio_filename = extract_audio(fields)
-            cleaned = [clean(f) for f in fields]
-            non_empty = [c for c in cleaned if c]
-            if len(non_empty) < 2:
+            swedish = clean(safe(fields, 0))
+            english = clean(safe(fields, 4))
+            phonetic = clean(safe(fields, 8))
+            pos = clean(safe(fields, 9))
+            example = clean(safe(fields, 10))
+            level_raw = clean(safe(fields, 12))
+
+            if not swedish or not english:
                 continue
 
-            swedish = non_empty[0]
-            english = non_empty[1]
+            try:
+                level = int(level_raw) if level_raw else None
+            except ValueError:
+                level = None
 
+            audio_filename = extract_audio_from_fields(fields)
             audio_out_name = None
             if audio_filename:
-                # Trouver le numéro correspondant dans media_map
-                num = next(
-                    (k for k, v in media_map.items() if v == audio_filename),
-                    None,
-                )
+                num = rev_map.get(audio_filename)
                 if num is not None:
                     src = tmp_path / num
                     if src.exists():
@@ -109,25 +124,28 @@ def main(apkg_path: str) -> None:
                             copied += 1
                         audio_out_name = audio_filename
 
-            cards.append(
-                {
-                    "id": note_id,
-                    "swedish": swedish,
-                    "english": english,
-                    "audio_file": audio_out_name,
-                }
-            )
+            cards.append({
+                "id": note_id,
+                "swedish": swedish,
+                "english": english,
+                "audio_file": audio_out_name,
+                "level": level,
+                "pos": pos or None,
+                "example": example or None,
+                "phonetic": phonetic or None,
+            })
+
+        # Tri par level (fréquence) — None à la fin
+        cards.sort(key=lambda c: (c["level"] is None, c["level"] if c["level"] is not None else 9999, c["id"]))
 
         cards_json = out_dir / "cards.json"
         cards_json.write_text(
             json.dumps(cards, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         print(f"OK: {len(cards)} cartes -> {cards_json}")
-        print(f"OK: {copied} fichiers audio -> {media_out}")
-        print(
-            "\nProchaine étape: zipper le dossier media/ et l'AirDrop sur iPhone "
-            "pour l'import dans la PWA."
-        )
+        print(f"OK: {copied} nouveaux fichiers audio -> {media_out}")
+        with_audio = sum(1 for c in cards if c["audio_file"])
+        print(f"Cartes avec audio: {with_audio}/{len(cards)}")
 
 
 if __name__ == "__main__":

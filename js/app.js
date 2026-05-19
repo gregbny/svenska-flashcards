@@ -31,11 +31,9 @@ async function boot() {
   await initDB();
   await registerSW();
 
-  const cardCount = await getCardCount();
-  if (cardCount === 0) {
-    // cards.json pas encore chargé en base → le faire
-    await loadCardsJson();
-  }
+  // Toujours re-synchroniser cards.json (upsert par id) pour propager les corrections.
+  // L'état SM-2 vit en localStorage, il n'est pas écrasé.
+  await loadCardsJson();
 
   const audioReady = await hasAudioImported();
   if (!audioReady) {
@@ -166,16 +164,22 @@ function renderCard() {
   document.getElementById('card-swedish-small').textContent = c.swedish;
   document.getElementById('card-english').textContent = c.english;
 
-  const phon = document.getElementById('card-phonetic');
-  if (c.phonetic) {
-    phon.textContent = c.phonetic;
-    phon.classList.remove('hidden');
-  } else {
-    phon.classList.add('hidden');
-  }
+  toggleField('card-pos', c.pos);
+  toggleField('card-phonetic', c.phonetic);
+  toggleField('card-example', c.example);
 
   updateSessionBar();
   playCardAudio(c).catch(() => {});
+}
+
+function toggleField(id, value) {
+  const el = document.getElementById(id);
+  if (value) {
+    el.textContent = value;
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
 }
 
 function flipCard() {
