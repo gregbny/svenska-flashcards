@@ -15,6 +15,7 @@ import { DEFAULT_STATE, sm2Apply, isDue } from './sm2.js';
 
 const LS_KEY = 'svenska.state.v1';
 const PRIORITY_LIMIT = 2000;
+const CEFR_ORDER = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
 
 // ─── Persistence ────────────────────────────────────────────────
 function loadState() {
@@ -69,8 +70,17 @@ export async function startSession({ target = 25, maxNew = 10 } = {}) {
     }
   }
 
-  // Sort new cards by Memrise frequency level (1 = most frequent); fallback on deck order
+  // Sort new cards by learner priority:
+  //   1) CEFR level (A1 < A2 < B1 < B2 < C1 < C2 < unknown)
+  //   2) Kelly frequency rank (lower = more frequent)
+  //   3) Memrise level + deck order as final tiebreakers
   newCards.sort((a, b) => {
+    const ca = CEFR_ORDER[a.cefr] ?? 99;
+    const cb = CEFR_ORDER[b.cefr] ?? 99;
+    if (ca !== cb) return ca - cb;
+    const fa = a.freq_rank ?? Infinity;
+    const fb = b.freq_rank ?? Infinity;
+    if (fa !== fb) return fa - fb;
     const la = a.level ?? Infinity;
     const lb = b.level ?? Infinity;
     if (la !== lb) return la - lb;
