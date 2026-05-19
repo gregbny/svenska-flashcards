@@ -164,8 +164,10 @@ function renderCard() {
   document.getElementById('card-swedish-small').textContent = c.swedish;
   document.getElementById('card-english').textContent = c.english;
 
-  toggleField('card-pos', c.pos);
-  toggleField('card-phonetic', c.phonetic);
+  // Méta : "verb" / "noun · common" / "modal verb"
+  const metaParts = [c.pos, c.gender].filter(Boolean);
+  toggleField('card-meta', metaParts.join(' · '));
+  toggleField('card-alternatives', c.alternatives);
   toggleField('card-example', c.example);
 
   updateSessionBar();

@@ -5,19 +5,8 @@ Extraction du deck Anki .apkg -> cards.json + dossier media/
 Usage:
     python3 extract.py 8000_most_common_swedish_words.apkg
 
-Produit :
-    - cards.json    : [{ id, swedish, english, audio_file, level, pos, example, phonetic }]
-    - media/        : tous les fichiers audio renommés
-
-Spécifique au deck Memrise "8000 most common Swedish words" (4 sous-modèles).
-Structure des champs :
-    [0]  Swedish               ← recto
-    [1]  Swedish Alternatives  (conjugaisons)
-    [4]  English               ← verso
-    [8]  Pronunciation         (Part 1 uniquement)
-    [9]  Part of Speech        (Part 1, Part 2, Part 3) — [10] dans Part 4 ? non, c'est [9]
-    [10] Example               (Parts 2-4)
-    [12] Level                 (1 = mot le plus fréquent)
+Spécifique au deck Memrise "8000 most common Swedish words" (4 sous-modèles
+avec des indices DIFFÉRENTS pour POS / Gender / Example / Pronunciation).
 """
 
 import json
@@ -41,7 +30,6 @@ def clean(text):
 
 
 def extract_audio_from_fields(fields):
-    """Cherche [sound:xxx] dans tous les champs."""
     for f in fields:
         m = AUDIO_RE.search(f)
         if m:
@@ -49,8 +37,38 @@ def extract_audio_from_fields(fields):
     return None
 
 
-def safe(fields, idx):
-    return fields[idx] if idx < len(fields) else ""
+def build_field_map(models):
+    """
+    Construit pour chaque mid un dict {logical_name: field_index}.
+    Couvre Swedish, Swedish Alternatives, English, Pronunciation, Part of Speech,
+    Gender, Example, Audio, Level.
+    """
+    LOGICAL = {
+        'Swedish': 'swedish',
+        'Swedish Alternatives': 'alternatives',
+        'English': 'english',
+        'Pronunciation': 'phonetic',
+        'Part of Speech': 'pos',
+        'Gender': 'gender',
+        'Example': 'example',
+        'Audio': 'audio',
+        'Level': 'level',
+    }
+    out = {}
+    for mid, model in models.items():
+        m = {}
+        for i, f in enumerate(model['flds']):
+            key = LOGICAL.get(f['name'])
+            if key:
+                m[key] = i
+        out[int(mid)] = m
+    return out
+
+
+def get(fields, idx):
+    if idx is None or idx >= len(fields):
+        return ""
+    return fields[idx]
 
 
 def main(apkg_path):
@@ -85,26 +103,31 @@ def main(apkg_path):
 
         print(f"Lecture de {db_path.name}...")
         conn = sqlite3.connect(db_path)
-        rows = conn.execute("SELECT id, flds FROM notes").fetchall()
+        models = json.loads(conn.execute("SELECT models FROM col").fetchone()[0])
+        field_map = build_field_map(models)
+        print(f"{len(field_map)} modèles analysés.")
+
+        rows = conn.execute("SELECT id, mid, flds FROM notes").fetchall()
         conn.close()
         print(f"{len(rows)} notes trouvées.")
 
         cards = []
         copied = 0
-        for note_id, flds in rows:
+        for note_id, mid, flds in rows:
             fields = flds.split("\x1f")
-            if len(fields) < 5:
-                continue
+            fm = field_map.get(mid, {})
 
-            swedish = clean(safe(fields, 0))
-            english = clean(safe(fields, 4))
-            phonetic = clean(safe(fields, 8))
-            pos = clean(safe(fields, 9))
-            example = clean(safe(fields, 10))
-            level_raw = clean(safe(fields, 12))
-
+            swedish = clean(get(fields, fm.get('swedish')))
+            english = clean(get(fields, fm.get('english')))
             if not swedish or not english:
                 continue
+
+            alternatives = clean(get(fields, fm.get('alternatives')))
+            phonetic = clean(get(fields, fm.get('phonetic')))
+            pos = clean(get(fields, fm.get('pos')))
+            gender = clean(get(fields, fm.get('gender')))
+            example = clean(get(fields, fm.get('example')))
+            level_raw = clean(get(fields, fm.get('level')))
 
             try:
                 level = int(level_raw) if level_raw else None
@@ -128,14 +151,15 @@ def main(apkg_path):
                 "id": note_id,
                 "swedish": swedish,
                 "english": english,
+                "alternatives": alternatives or None,
                 "audio_file": audio_out_name,
                 "level": level,
                 "pos": pos or None,
+                "gender": gender or None,
                 "example": example or None,
                 "phonetic": phonetic or None,
             })
 
-        # Tri par level (fréquence) — None à la fin
         cards.sort(key=lambda c: (c["level"] is None, c["level"] if c["level"] is not None else 9999, c["id"]))
 
         cards_json = out_dir / "cards.json"
@@ -144,8 +168,9 @@ def main(apkg_path):
         )
         print(f"OK: {len(cards)} cartes -> {cards_json}")
         print(f"OK: {copied} nouveaux fichiers audio -> {media_out}")
-        with_audio = sum(1 for c in cards if c["audio_file"])
-        print(f"Cartes avec audio: {with_audio}/{len(cards)}")
+        for key in ('alternatives', 'phonetic', 'pos', 'gender', 'example', 'audio_file', 'level'):
+            n = sum(1 for c in cards if c.get(key))
+            print(f"  {key:14}: {n}/{len(cards)} renseignés")
 
 
 if __name__ == "__main__":
