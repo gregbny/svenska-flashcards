@@ -3,11 +3,23 @@
 html, body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  height: 100%;
 }
 
 body {
+  /* dvh = dynamic viewport, exclut la barre Safari quand elle se rétracte */
+  height: 100dvh;
+  overflow: hidden;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Chaque écran prend toute la hauteur dispo, sans scroll global */
+section {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* When a section is shown, swap from hidden -> flex */
@@ -32,6 +44,7 @@ section:not(.hidden) {
   border-bottom: 4px solid var(--btn-shadow, rgba(0,0,0,0.15));
   transition: transform 0.05s ease, filter 0.1s ease;
   user-select: none;
+  flex-shrink: 0;
 }
 .btn-duo:active {
   transform: translateY(2px);

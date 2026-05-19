@@ -14,7 +14,7 @@ import { ui } from './ui.js';
 import { initDB, hasAudioImported, getCardCount, bulkPutCards } from './db.js';
 import { startSession, currentCard, rateCard, sessionStats } from './session.js';
 import { runImport } from './import.js';
-import { playCardAudio } from './audio.js';
+import { playCardAudio, unlockAudio } from './audio.js';
 
 const DEPART_DATE = new Date('2026-07-20T00:00:00');
 const DAILY_TARGET = 25;
@@ -113,7 +113,10 @@ async function showHome() {
   document.getElementById('review-count').textContent = stats.reviewsDue ?? 0;
   document.getElementById('days-left').textContent = daysUntilDepart();
 
-  document.getElementById('start-session-btn').onclick = beginStudy;
+  document.getElementById('start-session-btn').onclick = () => {
+    unlockAudio(); // doit être dans le user gesture, sync
+    beginStudy();
+  };
 }
 
 function daysUntilDepart() {

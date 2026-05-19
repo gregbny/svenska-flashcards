@@ -40,12 +40,12 @@
   </script>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="min-h-screen bg-white text-duo-ink font-sans antialiased select-none">
+<body class="bg-white text-duo-ink font-sans antialiased select-none">
 
   <!-- ============================================================
        SCREEN: SETUP (one-time audio import)
        ============================================================ -->
-  <section id="screen-setup" class="hidden min-h-screen flex-col items-center justify-center px-6 py-10">
+  <section id="screen-setup" class="hidden flex-col items-center justify-center px-6 py-6">
     <div class="text-7xl mb-6">🇸🇪</div>
     <h1 class="text-3xl font-extrabold mb-2 text-center">Svenska</h1>
     <p class="text-duo-ink/70 text-center mb-10 max-w-xs">
@@ -83,8 +83,8 @@
   <!-- ============================================================
        SCREEN: HOME (daily session entry)
        ============================================================ -->
-  <section id="screen-home" class="hidden min-h-screen flex-col px-6 py-8">
-    <header class="flex items-center justify-between mb-8">
+  <section id="screen-home" class="hidden flex-col px-6 py-5">
+    <header class="flex items-center justify-between mb-5">
       <div class="flex items-center gap-2">
         <span class="text-3xl">🇸🇪</span>
         <span class="font-extrabold text-xl">Svenska</span>
@@ -95,7 +95,7 @@
       </div>
     </header>
 
-    <div class="bg-duo-soft border border-duo-border rounded-2xl p-5 mb-6">
+    <div class="bg-duo-soft border border-duo-border rounded-2xl p-4 mb-4">
       <div class="flex justify-between items-baseline mb-3">
         <span class="text-sm text-duo-ink/60">Aujourd'hui</span>
         <span id="today-progress" class="text-xs font-bold text-duo-ink/60">0 / 25</span>
@@ -115,7 +115,7 @@
       </div>
     </div>
 
-    <div class="bg-duo-soft border border-duo-border rounded-2xl p-4 mb-8 text-center">
+    <div class="bg-duo-soft border border-duo-border rounded-2xl p-3 mb-4 text-center">
       <div class="text-xs text-duo-ink/60 uppercase tracking-wide mb-1">Départ Suède</div>
       <div class="font-extrabold text-lg">
         <span id="days-left">62</span> jours restants
@@ -130,7 +130,7 @@
   <!-- ============================================================
        SCREEN: STUDY (flashcard)
        ============================================================ -->
-  <section id="screen-study" class="hidden min-h-screen flex-col px-6 py-6">
+  <section id="screen-study" class="hidden flex-col px-4 py-4">
     <header class="flex items-center gap-3 mb-6">
       <button id="quit-session-btn" class="text-duo-ink/40 text-3xl leading-none w-8 h-8 flex items-center justify-center">×</button>
       <div class="flex-1 h-3 bg-duo-border rounded-full overflow-hidden">
@@ -141,7 +141,7 @@
 
     <div class="flex-1 flex flex-col items-center justify-center">
       <!-- Card -->
-      <div id="card" class="w-full max-w-sm aspect-[3/4] bg-white border-2 border-duo-border rounded-2xl shadow-duo flex flex-col items-center justify-center p-6 mb-4 cursor-pointer active:scale-[0.99] transition-transform">
+      <div id="card" class="w-full max-w-sm min-h-[280px] bg-white border-2 border-duo-border rounded-2xl shadow-duo flex flex-col items-center justify-center p-6 mb-4 cursor-pointer active:scale-[0.99] transition-transform">
 
         <!-- Front -->
         <div id="card-front" class="flex flex-col items-center justify-center text-center gap-4">
@@ -187,7 +187,7 @@
   <!-- ============================================================
        SCREEN: DONE (end of session)
        ============================================================ -->
-  <section id="screen-done" class="hidden min-h-screen flex-col items-center justify-center px-6 py-10">
+  <section id="screen-done" class="hidden flex-col items-center justify-center px-6 py-6">
     <div class="text-7xl mb-4">🎉</div>
     <h2 class="text-3xl font-extrabold mb-2 text-center">Session terminée !</h2>
     <p class="text-duo-ink/60 text-center mb-8">Bra jobbat !</p>
@@ -227,7 +227,7 @@
   <!-- ============================================================
        SCREEN: LOADING (initial boot)
        ============================================================ -->
-  <section id="screen-loading" class="min-h-screen flex flex-col items-center justify-center">
+  <section id="screen-loading" class="flex flex-col items-center justify-center">
     <div class="text-7xl mb-4 animate-pulse">🇸🇪</div>
     <div class="text-duo-ink/50 text-sm">Chargement…</div>
   </section>
