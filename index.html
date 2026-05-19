@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#58CC02" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Svenska" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Svenska — Flashcards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            duo: {
+              green: '#58CC02',
+              greenDark: '#46A302',
+              red: '#FF4B4B',
+              orange: '#FF9600',
+              blue: '#1CB0F6',
+              ink: '#3C3C3C',
+              soft: '#F7F7F7',
+              border: '#E5E5E5',
+            },
+          },
+          boxShadow: {
+            duo: '0 4px 0 0 rgb(0 0 0 / 0.08)',
+            duoBtn: '0 4px 0 0 var(--btn-shadow, #46A302)',
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen bg-white text-duo-ink font-sans antialiased select-none">
+
+  <!-- ============================================================
+       SCREEN: SETUP (one-time audio import)
+       ============================================================ -->
+  <section id="screen-setup" class="hidden min-h-screen flex-col items-center justify-center px-6 py-10">
+    <div class="text-7xl mb-6">🇸🇪</div>
+    <h1 class="text-3xl font-extrabold mb-2 text-center">Svenska</h1>
+    <p class="text-duo-ink/70 text-center mb-10 max-w-xs">
+      Importe une fois l'audio des cartes pour utiliser l'app 100% hors-ligne.
+    </p>
+
+    <div class="w-full max-w-sm bg-duo-soft border border-duo-border rounded-2xl p-5 mb-6">
+      <ol class="text-sm space-y-2 text-duo-ink/80">
+        <li><span class="font-bold text-duo-ink">1.</span> Sur PC, zippe le dossier <code class="bg-white px-1 rounded">media/</code></li>
+        <li><span class="font-bold text-duo-ink">2.</span> AirDrop le zip vers ton iPhone</li>
+        <li><span class="font-bold text-duo-ink">3.</span> Sélectionne-le ci-dessous</li>
+      </ol>
+    </div>
+
+    <label class="btn-duo btn-green w-full max-w-sm cursor-pointer">
+      <input id="audio-zip-input" type="file" accept=".zip" class="hidden" />
+      Importer l'audio (.zip)
+    </label>
+
+    <div id="import-progress" class="hidden w-full max-w-sm mt-6">
+      <div class="flex justify-between text-xs text-duo-ink/60 mb-1">
+        <span id="import-label">Extraction…</span>
+        <span id="import-count">0 / 0</span>
+      </div>
+      <div class="h-3 bg-duo-border rounded-full overflow-hidden">
+        <div id="import-bar" class="h-full bg-duo-green transition-all" style="width:0%"></div>
+      </div>
+    </div>
+
+    <button id="skip-audio-btn" class="mt-6 text-sm text-duo-ink/50 underline">
+      Continuer sans audio
+    </button>
+  </section>
+
+  <!-- ============================================================
+       SCREEN: HOME (daily session entry)
+       ============================================================ -->
+  <section id="screen-home" class="hidden min-h-screen flex-col px-6 py-8">
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-2">
+        <span class="text-3xl">🇸🇪</span>
+        <span class="font-extrabold text-xl">Svenska</span>
+      </div>
+      <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-3 py-1">
+        <span class="text-duo-orange text-lg">🔥</span>
+        <span id="streak-count" class="font-bold text-sm">0</span>
+      </div>
+    </header>
+
+    <div class="bg-duo-soft border border-duo-border rounded-2xl p-5 mb-6">
+      <div class="flex justify-between items-baseline mb-3">
+        <span class="text-sm text-duo-ink/60">Aujourd'hui</span>
+        <span id="today-progress" class="text-xs font-bold text-duo-ink/60">0 / 25</span>
+      </div>
+      <div class="h-3 bg-duo-border rounded-full overflow-hidden mb-4">
+        <div id="today-bar" class="h-full bg-duo-green transition-all" style="width:0%"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div>
+          <div id="new-count" class="text-2xl font-extrabold text-duo-blue">0</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Nouvelles</div>
+        </div>
+        <div>
+          <div id="review-count" class="text-2xl font-extrabold text-duo-orange">0</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Révisions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-duo-soft border border-duo-border rounded-2xl p-4 mb-8 text-center">
+      <div class="text-xs text-duo-ink/60 uppercase tracking-wide mb-1">Départ Suède</div>
+      <div class="font-extrabold text-lg">
+        <span id="days-left">62</span> jours restants
+      </div>
+    </div>
+
+    <button id="start-session-btn" class="btn-duo btn-green w-full mt-auto">
+      Commencer la session
+    </button>
+  </section>
+
+  <!-- ============================================================
+       SCREEN: STUDY (flashcard)
+       ============================================================ -->
+  <section id="screen-study" class="hidden min-h-screen flex-col px-6 py-6">
+    <header class="flex items-center gap-3 mb-6">
+      <button id="quit-session-btn" class="text-duo-ink/40 text-3xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+      <div class="flex-1 h-3 bg-duo-border rounded-full overflow-hidden">
+        <div id="session-bar" class="h-full bg-duo-green transition-all" style="width:0%"></div>
+      </div>
+      <span id="session-progress" class="text-xs font-bold text-duo-ink/60 tabular-nums w-12 text-right">0/25</span>
+    </header>
+
+    <div class="flex-1 flex flex-col items-center justify-center">
+      <!-- Card -->
+      <div id="card" class="w-full max-w-sm aspect-[3/4] bg-white border-2 border-duo-border rounded-2xl shadow-duo flex flex-col items-center justify-center p-6 mb-4 cursor-pointer active:scale-[0.99] transition-transform">
+
+        <!-- Front -->
+        <div id="card-front" class="flex flex-col items-center justify-center text-center gap-4">
+          <button id="audio-btn" class="w-14 h-14 rounded-full bg-duo-blue/10 text-duo-blue flex items-center justify-center text-2xl active:scale-95 transition-transform">
+            🔊
+          </button>
+          <div id="card-swedish" class="text-4xl font-extrabold leading-tight">—</div>
+          <div class="text-xs text-duo-ink/40 uppercase tracking-widest mt-4">Touche pour révéler</div>
+        </div>
+
+        <!-- Back (hidden initially) -->
+        <div id="card-back" class="hidden flex-col items-center justify-center text-center gap-3">
+          <div id="card-swedish-small" class="text-xl font-bold text-duo-ink/70">—</div>
+          <div class="w-12 h-0.5 bg-duo-border rounded-full"></div>
+          <div id="card-english" class="text-3xl font-extrabold text-duo-green leading-tight">—</div>
+          <div id="card-phonetic" class="text-sm text-duo-ink/50 italic mt-2 hidden">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback buttons (hidden until card is flipped) -->
+    <div id="feedback-buttons" class="hidden grid grid-cols-3 gap-2 mt-2">
+      <button data-rating="hard" class="btn-duo btn-red flex flex-col items-center py-3">
+        <span class="text-xl">❌</span>
+        <span class="text-xs mt-1">Difficile</span>
+      </button>
+      <button data-rating="good" class="btn-duo btn-orange flex flex-col items-center py-3">
+        <span class="text-xl">😐</span>
+        <span class="text-xs mt-1">Correct</span>
+      </button>
+      <button data-rating="easy" class="btn-duo btn-green flex flex-col items-center py-3">
+        <span class="text-xl">✅</span>
+        <span class="text-xs mt-1">Facile</span>
+      </button>
+    </div>
+
+    <!-- Flip prompt (visible only on front) -->
+    <button id="flip-btn" class="btn-duo btn-blue w-full mt-2">
+      Voir la réponse
+    </button>
+  </section>
+
+  <!-- ============================================================
+       SCREEN: DONE (end of session)
+       ============================================================ -->
+  <section id="screen-done" class="hidden min-h-screen flex-col items-center justify-center px-6 py-10">
+    <div class="text-7xl mb-4">🎉</div>
+    <h2 class="text-3xl font-extrabold mb-2 text-center">Session terminée !</h2>
+    <p class="text-duo-ink/60 text-center mb-8">Bra jobbat !</p>
+
+    <div class="w-full max-w-sm bg-duo-soft border border-duo-border rounded-2xl p-5 mb-4">
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div id="recap-total" class="text-2xl font-extrabold">0</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Cartes</div>
+        </div>
+        <div>
+          <div id="recap-new" class="text-2xl font-extrabold text-duo-blue">0</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Nouvelles</div>
+        </div>
+        <div>
+          <div id="recap-accuracy" class="text-2xl font-extrabold text-duo-green">0%</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Réussite</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full max-w-sm bg-duo-soft border border-duo-border rounded-2xl p-5 mb-8 flex items-center justify-between">
+      <div>
+        <div class="text-xs text-duo-ink/60 uppercase tracking-wide mb-1">Streak</div>
+        <div class="text-2xl font-extrabold">
+          <span id="recap-streak">0</span> jour<span class="recap-streak-s">s</span>
+        </div>
+      </div>
+      <div class="text-4xl">🔥</div>
+    </div>
+
+    <button id="back-home-btn" class="btn-duo btn-green w-full max-w-sm">
+      Retour à l'accueil
+    </button>
+  </section>
+
+  <!-- ============================================================
+       SCREEN: LOADING (initial boot)
+       ============================================================ -->
+  <section id="screen-loading" class="min-h-screen flex flex-col items-center justify-center">
+    <div class="text-7xl mb-4 animate-pulse">🇸🇪</div>
+    <div class="text-duo-ink/50 text-sm">Chargement…</div>
+  </section>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
