@@ -11,7 +11,7 @@
  */
 
 import { ui } from './ui.js';
-import { initDB, hasAudioImported, bulkPutCards } from './db.js';
+import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
 import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats } from './session.js';
 import { runImport } from './import.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
@@ -54,7 +54,21 @@ async function registerSW() {
   }
 }
 
-async function loadCardsJson() {
+async function loadCardsJson({ force = false } = {}) {
+  // Fast path : si on a déjà des cartes en IDB et qu'on ne force pas,
+  // on saute toute la phase fetch + bulkPut (gain : ~plusieurs secondes
+  // au boot). La propagation des corrections est gérée via le refresh
+  // en arrière-plan ci-dessous.
+  if (!force) {
+    const existing = await getCardCount();
+    if (existing > 0) {
+      // Refresh non-bloquant : on déclenchera un upsert si le contenu
+      // distant a changé, sans retarder l'écran home.
+      scheduleBackgroundRefresh();
+      return;
+    }
+  }
+
   let deckCards = [];
   try {
     const res = await fetch('./cards.json');
@@ -112,7 +126,46 @@ async function loadCardsJson() {
   }
 
   const merged = [...deckCards, ...travelCards];
-  if (merged.length) await bulkPutCards(merged);
+  if (merged.length) {
+    await bulkPutCards(merged);
+    // Note le hash courant pour le futur diff non-bloquant
+    const sig = `${deckCards.length}:${deckCards[0]?.id ?? ''}:${deckCards.at(-1)?.id ?? ''}:${travelCards.length}`;
+    await setMeta('cardsSig', sig);
+  }
+}
+
+/**
+ * Refresh des cartes en arrière-plan, sans bloquer l'UI.
+ * Détecte un changement de contenu via une signature légère
+ * (count + premier/dernier id). Si différent, re-bulkPut.
+ */
+function scheduleBackgroundRefresh() {
+  const run = async () => {
+    try {
+      const [deckRes, travelRes] = await Promise.all([
+        fetch('./cards.json').catch(() => null),
+        fetch('./travel.json').catch(() => null),
+      ]);
+      if (!deckRes || !deckRes.ok) return;
+      const deckRaw = await deckRes.json();
+      const travelRaw = (travelRes && travelRes.ok) ? await travelRes.json() : [];
+
+      const sig = `${deckRaw.length}:${deckRaw[0]?.id ?? ''}:${deckRaw.at(-1)?.id ?? ''}:${travelRaw.length}`;
+      const prev = await getMeta('cardsSig');
+      if (prev === sig) return; // contenu inchangé, rien à faire
+
+      // Contenu modifié → on relance le chemin de chargement complet (forcé)
+      await loadCardsJson({ force: true });
+    } catch (err) {
+      console.warn('background card refresh failed', err);
+    }
+  };
+  // Démarre quand le thread est tranquille pour ne pas concurrencer le boot
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(run, { timeout: 5000 });
+  } else {
+    setTimeout(run, 2000);
+  }
 }
 
 // ───────────────────────── Setup screen ─────────────────────────

@@ -4,12 +4,13 @@
  * L'audio n'est PAS dans le cache SW — il est stocké en IndexedDB après import manuel.
  */
 
-const VERSION = 'svenska-v5';
+const VERSION = 'svenska-v6';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
+  './cards.json',
   './travel.json',
   './js/app.js',
   './js/db.js',
@@ -57,16 +58,24 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // cards.json + travel.json: network-first, fallback cache
+  // cards.json + travel.json: stale-while-revalidate
+  // → sert immédiatement la version cache (boot rapide), met à jour
+  //   le cache en arrière-plan pour le prochain démarrage.
   if (url.pathname.endsWith('/cards.json') || url.pathname.endsWith('/travel.json')) {
     event.respondWith(
-      fetch(request)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put(request, copy));
-          return res;
-        })
-        .catch(() => caches.match(request))
+      caches.match(request).then((cached) => {
+        const fetchAndCache = fetch(request)
+          .then((res) => {
+            if (res && res.ok) {
+              const copy = res.clone();
+              caches.open(VERSION).then((c) => c.put(request, copy));
+            }
+            return res;
+          })
+          .catch(() => cached); // si le réseau échoue, on retombe sur le cache
+        // Si on a du cache, on le renvoie tout de suite ; sinon on attend le réseau.
+        return cached || fetchAndCache;
+      })
     );
     return;
   }
