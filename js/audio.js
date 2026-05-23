@@ -44,17 +44,30 @@ export function unlockAudio() {
   el.src = 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
   el.muted = true;
 
-  _unlockPromise = el.play()
-    .then(() => {
-      try { el.pause(); } catch {}
-      el.currentTime = 0;
-      el.muted = false;
-      _unlocked = true;
-      return true;
-    })
-    .catch(() => {
-      _unlockPromise = null;
-      return false;
+  const tryPlay = el.play().then(() => {
+    try { el.pause(); } catch {}
+    el.currentTime = 0;
+    el.muted = false;
+    _unlocked = true;
+    return true;
+  });
+
+  // GARDE-FOU iOS Safari : el.play() peut renvoyer une promesse qui
+  // ne résout JAMAIS dans certains contextes (post-activation de SW,
+  // perte du focus juste après le clic, etc.). Sans ce timeout,
+  // tout `await unlockAudio()` bloque l'app indéfiniment.
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(false), 800));
+
+  _unlockPromise = Promise.race([tryPlay, timeout])
+    .catch(() => false)
+    .then((ok) => {
+      if (!ok) {
+        // unlock pas confirmé, mais on n'attend plus. Le premier
+        // playCardAudio retentera (et bénéficiera du user gesture
+        // implicite du clic sur la première carte si nécessaire).
+        _unlockPromise = null;
+      }
+      return ok;
     });
 
   return _unlockPromise;
