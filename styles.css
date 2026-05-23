@@ -74,3 +74,75 @@ section:not(.hidden) {
 [data-rating]:active {
   transform: translateY(2px) scale(0.98);
 }
+
+/* Multiple-choice / Listening option buttons */
+.opt-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0.5rem 1rem;
+  border: 2px solid #E5E5E5;
+  border-bottom-width: 4px;
+  border-radius: 1rem;
+  background: white;
+  color: #3C3C3C;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+  text-align: center;
+  cursor: pointer;
+}
+.opt-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+.opt-btn.opt-correct {
+  background: #D7FFB8;
+  border-color: #58CC02;
+  color: #3C7B00;
+}
+.opt-btn.opt-wrong {
+  background: #FFDFE0;
+  border-color: #FF4B4B;
+  color: #B91C1C;
+}
+.opt-btn:disabled {
+  pointer-events: none;
+}
+.opt-btn.opt-faded {
+  opacity: 0.5;
+}
+
+/* XP floater "+10 XP" qui monte et disparaît */
+.xp-floater {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #1CB0F6;
+  background: white;
+  border: 2px solid #1CB0F6;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+  animation: xp-float 1.2s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes xp-float {
+  0%   { opacity: 0; transform: translateY(0)    scale(0.8); }
+  15%  { opacity: 1; transform: translateY(-4px) scale(1.05); }
+  100% { opacity: 0; transform: translateY(-44px) scale(1);   }
+}
+
+/* Pulse de la barre de progression quotidienne quand on franchit l'objectif */
+.goal-reached {
+  animation: goal-pulse 0.8s ease-out;
+}
+@keyframes goal-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.03); }
+}

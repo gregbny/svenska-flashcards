@@ -11,10 +11,11 @@
  */
 
 import { ui } from './ui.js';
-import { initDB, hasAudioImported, getCardCount, bulkPutCards } from './db.js';
-import { startSession, currentCard, rateCard, sessionStats } from './session.js';
+import { initDB, hasAudioImported, bulkPutCards } from './db.js';
+import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats } from './session.js';
 import { runImport } from './import.js';
-import { playCardAudio, unlockAudio } from './audio.js';
+import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
+import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sound.js';
 
 const DEPART_DATE = new Date('2026-07-20T00:00:00');
 const DAILY_TARGET = 25;
@@ -22,6 +23,7 @@ const DAILY_TARGET = 25;
 const state = {
   flipped: false,
   importing: false,
+  answered: false, // pour MC/Listen
 };
 
 // ───────────────────────── Bootstrap ─────────────────────────
@@ -53,16 +55,64 @@ async function registerSW() {
 }
 
 async function loadCardsJson() {
+  let deckCards = [];
   try {
     const res = await fetch('./cards.json');
-    if (!res.ok) return; // pas encore extrait — l'app fonctionne sans
-    const raw = await res.json();
-    // Ajoute le champ `order` (position dans le deck = fréquence décroissante)
-    const cards = raw.map((c, i) => ({ ...c, order: i }));
-    await bulkPutCards(cards);
+    if (res.ok) {
+      const raw = await res.json();
+      // Ajoute le champ `order` (position dans le deck = fréquence décroissante)
+      deckCards = raw.map((c, i) => ({ ...c, order: i }));
+    }
   } catch {
-    // Pas de cards.json en local (GitHub Pages sans extraction) — ignoré silencieusement
+    // Pas de cards.json en local — ignoré
   }
+
+  // Pack voyage : mots/phrases curated, fusionnés en tête de file
+  let travelCards = [];
+  try {
+    const res = await fetch('./travel.json');
+    if (res.ok) {
+      const raw = await res.json();
+      // Index audio_file par texte suédois pour réutiliser quand dispo.
+      // On indexe aussi la forme "sans article" (en/ett/att) car le deck
+      // stocke souvent "en bank" alors que le pack voyage a "en bank" ou "bank".
+      const audioBySv = new Map();
+      const STRIP_PREFIX = /^(en|ett|att)\s+/i;
+      const STRIP_TRAILING = /[?!.,]+$/;
+      const norm = (s) => s.trim().toLowerCase().replace(STRIP_TRAILING, '').replace(STRIP_PREFIX, '');
+      for (const c of deckCards) {
+        if (!c.audio_file || !c.swedish) continue;
+        audioBySv.set(c.swedish, c.audio_file);
+        const stripped = norm(c.swedish);
+        if (stripped !== c.swedish.toLowerCase()) {
+          if (!audioBySv.has(stripped)) audioBySv.set(stripped, c.audio_file);
+        }
+      }
+      const lookupAudio = (sv) =>
+        audioBySv.get(sv) ?? audioBySv.get(sv.toLowerCase()) ?? audioBySv.get(norm(sv)) ?? null;
+      travelCards = raw.map((c, i) => ({
+        id: -1000 - i,           // négatifs pour ne pas clasher avec les IDs Anki
+        swedish: c.swedish,
+        english: c.english,
+        alternatives: null,
+        audio_file: lookupAudio(c.swedish),
+        level: 0,
+        pos: 'travel',
+        gender: null,
+        example: null,
+        phonetic: null,
+        freq_rank: -1000 + i,    // ultra-prioritaire dans le tri par fréquence
+        cefr: 'A1',
+        pack: 'travel',
+        order: -1000 + i,
+      }));
+    }
+  } catch {
+    // Pas de travel.json — ignoré
+  }
+
+  const merged = [...deckCards, ...travelCards];
+  if (merged.length) await bulkPutCards(merged);
 }
 
 // ───────────────────────── Setup screen ─────────────────────────
@@ -103,13 +153,30 @@ async function showHome() {
   ui.show('home');
 
   // TODO(Sonnet): lire les vraies valeurs depuis la session / localStorage
-  const stats = await sessionStats();
+  const stats = sessionStats();
+  const [counters, mastery] = await Promise.all([
+    homeCounters({ maxNew: 10 }),
+    masteryStats({ limit: 2000 }),
+  ]);
+  document.getElementById('mastery-count').textContent = `${mastery.mastered} / ${mastery.total || 2000}`;
+  document.getElementById('mastery-bar').style.width =
+    `${Math.round((mastery.mastered / (mastery.total || 2000)) * 100)}%`;
   document.getElementById('streak-count').textContent = stats.streak ?? 0;
+  const freezes = stats.freezes ?? 0;
+  document.getElementById('freeze-badge').classList.toggle('hidden', freezes === 0);
+  document.getElementById('freeze-count').textContent = freezes;
   document.getElementById('today-progress').textContent = `${stats.doneToday ?? 0} / ${DAILY_TARGET}`;
   document.getElementById('today-bar').style.width = `${Math.round(((stats.doneToday ?? 0) / DAILY_TARGET) * 100)}%`;
-  document.getElementById('new-count').textContent = stats.newAvailable ?? 0;
-  document.getElementById('review-count').textContent = stats.reviewsDue ?? 0;
+  document.getElementById('new-count').textContent = counters.newAvailable;
+  document.getElementById('review-count').textContent = counters.reviewsDue;
   document.getElementById('days-left').textContent = daysUntilDepart();
+  document.getElementById('xp-total').textContent = stats.xpTotal ?? 0;
+
+  // Mute toggle
+  const muteBtn = document.getElementById('mute-btn');
+  const renderMute = () => muteBtn.textContent = isMuted() ? '🔇' : '🔊';
+  renderMute();
+  muteBtn.onclick = () => { toggleMute(); renderMute(); };
 
   document.getElementById('start-session-btn').onclick = () => {
     unlockAudio(); // doit être dans le user gesture, sync
@@ -124,6 +191,9 @@ function daysUntilDepart() {
 
 // ───────────────────────── Study screen ─────────────────────────
 async function beginStudy() {
+  // unlockAudio() a été appelé sync dans le gesture du bouton.
+  // On attend la fin du unlock avant de lancer la 1re carte.
+  await unlockAudio();
   await startSession({ target: DAILY_TARGET, maxNew: 10 });
   ui.show('study');
 
@@ -137,21 +207,81 @@ async function beginStudy() {
     const c = currentCard();
     if (c) playCardAudio(c);
   };
+  document.getElementById('mc-audio-btn').onclick = () => {
+    const c = currentCard();
+    if (c) playCardAudio(c);
+  };
+  document.getElementById('listen-audio-btn').onclick = () => {
+    const c = currentCard();
+    if (c) playCardAudio(c);
+  };
+  document.getElementById('listen-slow-btn').onclick = () => {
+    const c = currentCard();
+    if (c) playCardAudio(c, { rate: 0.7 });
+  };
+  document.getElementById('enett-audio-btn').onclick = () => {
+    const c = currentCard();
+    if (c) playCardAudio(c);
+  };
+  document.getElementById('continue-btn').onclick = advance;
 
   document.querySelectorAll('[data-rating]').forEach((btn) => {
     btn.onclick = async () => {
-      await rateCard(btn.dataset.rating);
+      const r = btn.dataset.rating;
+      // Son immédiat selon la note (good/easy = correct, hard = wrong)
+      if (r === 'hard') playWrong(); else playCorrect();
+      const res = await rateCard(r);
+      showXpFloater(res?.xpGained);
       advance();
     };
   });
 
-  renderCard();
+  renderExercise();
 }
 
-function renderCard() {
-  const c = currentCard();
-  if (!c) return finishSession();
+function setMode(mode) {
+  const modes = {
+    flash:   'card',
+    mc:      'exercise-mc',
+    listen:  'exercise-listen',
+    reverse: 'exercise-reverse',
+    enett:   'exercise-enett',
+  };
+  for (const [m, id] of Object.entries(modes)) {
+    const el = document.getElementById(id);
+    el.classList.toggle('hidden', m !== mode);
+    if (m !== 'flash') el.classList.toggle('flex', m === mode);
+  }
 
+  // Bottom action bar : seul le bon bouton visible
+  document.getElementById('flip-btn').classList.toggle('hidden', mode !== 'flash');
+  document.getElementById('feedback-buttons').classList.add('hidden');
+  document.getElementById('continue-btn').classList.add('hidden');
+}
+
+function renderExercise() {
+  const ex = currentExercise();
+  if (!ex) return finishSession();
+
+  state.answered = false;
+  updateSessionBar();
+
+  // Prefetch audio de la prochaine carte (non-bloquant)
+  const next = peekNextCard();
+  if (next) prefetchCardAudio(next);
+
+  setMode(ex.mode);
+  // Badge pack voyage
+  document.getElementById('pack-badge').classList.toggle('hidden', ex.card.pack !== 'travel');
+
+  if (ex.mode === 'flash') renderFlash(ex.card);
+  else if (ex.mode === 'mc') renderMC(ex);
+  else if (ex.mode === 'listen') renderListen(ex);
+  else if (ex.mode === 'reverse') renderReverse(ex);
+  else if (ex.mode === 'enett') renderEnett(ex);
+}
+
+function renderFlash(c) {
   state.flipped = false;
   document.getElementById('card-front').classList.remove('hidden');
   document.getElementById('card-front').classList.add('flex');
@@ -164,14 +294,88 @@ function renderCard() {
   document.getElementById('card-swedish-small').textContent = c.swedish;
   document.getElementById('card-english').textContent = c.english;
 
-  // Méta : "verb" / "noun · common" / "modal verb"
   const metaParts = [c.pos, c.gender].filter(Boolean);
   toggleField('card-meta', metaParts.join(' · '));
   toggleField('card-alternatives', c.alternatives);
   toggleField('card-example', c.example);
 
-  updateSessionBar();
   playCardAudio(c).catch(() => {});
+}
+
+function renderMC(ex) {
+  document.getElementById('mc-swedish').textContent = ex.card.swedish;
+  renderOptions(document.getElementById('mc-options'), ex);
+  playCardAudio(ex.card).catch(() => {});
+}
+
+function renderListen(ex) {
+  renderOptions(document.getElementById('listen-options'), ex);
+  // Joue l'audio automatiquement à l'affichage
+  playCardAudio(ex.card).catch(() => {});
+}
+
+function renderReverse(ex) {
+  document.getElementById('reverse-english').textContent = ex.promptText;
+  renderOptions(document.getElementById('reverse-options'), ex);
+  // Pas d'audio auto en reverse : on teste le rappel sans indice
+}
+
+function renderEnett(ex) {
+  document.getElementById('enett-noun').textContent = ex.promptText;
+  document.getElementById('enett-english').textContent = ex.card.english;
+  renderOptions(document.getElementById('enett-options'), ex);
+  playCardAudio(ex.card).catch(() => {});
+}
+
+function renderOptions(container, ex) {
+  container.innerHTML = '';
+  ex.options.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = text;
+    btn.onclick = () => handleAnswer(ex, i, btn, container);
+    container.appendChild(btn);
+  });
+}
+
+async function handleAnswer(ex, chosenIndex, btn, container) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const correct = chosenIndex === ex.correctIndex;
+  const buttons = container.querySelectorAll('.opt-btn');
+
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === ex.correctIndex) b.classList.add('opt-correct');
+    else if (i === chosenIndex && !correct) b.classList.add('opt-wrong');
+    else b.classList.add('opt-faded');
+  });
+
+  if (correct) playCorrect(); else playWrong();
+
+  // Si la réponse est mauvaise, on (re)joue l'audio Suédois pour aider à mémoriser
+  if (!correct) {
+    setTimeout(() => playCardAudio(ex.card).catch(() => {}), 400);
+  }
+
+  document.getElementById('continue-btn').classList.remove('hidden');
+  document.getElementById('continue-btn').classList.toggle('btn-green', correct);
+  document.getElementById('continue-btn').classList.toggle('btn-red', !correct);
+
+  // Stocke la rating à appliquer au prochain advance()
+  state.pendingRating = correct ? 'good' : 'hard';
+}
+
+function showXpFloater(amount) {
+  if (!amount) return;
+  const host = document.getElementById('xp-floater-host');
+  if (!host) return;
+  const el = document.createElement('div');
+  el.className = 'xp-floater';
+  el.textContent = `+${amount} XP`;
+  host.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
 }
 
 function toggleField(id, value) {
@@ -202,8 +406,15 @@ function flipCard() {
   }, 150);
 }
 
-function advance() {
-  renderCard();
+async function advance() {
+  // Pour MC/Listen, on applique le rating différé au moment du "Continuer"
+  if (state.pendingRating) {
+    const r = state.pendingRating;
+    state.pendingRating = null;
+    const res = await rateCard(r);
+    showXpFloater(res?.xpGained);
+  }
+  renderExercise();
 }
 
 function updateSessionBar() {
@@ -223,6 +434,9 @@ function finishSession() {
   const acc = s.sessionTotal ? Math.round(((s.sessionCorrect ?? 0) / s.sessionTotal) * 100) : 0;
   document.getElementById('recap-accuracy').textContent = `${acc}%`;
   document.getElementById('recap-streak').textContent = s.streak ?? 0;
+  document.getElementById('recap-xp').textContent = `+${s.sessionXP ?? 0}`;
+
+  playComplete();
 
   document.getElementById('back-home-btn').onclick = showHome;
 }

@@ -84,14 +84,22 @@
        SCREEN: HOME (daily session entry)
        ============================================================ -->
   <section id="screen-home" class="hidden flex-col px-6 py-5">
-    <header class="flex items-center justify-between mb-5">
+    <header class="flex items-center justify-between mb-5 gap-2">
       <div class="flex items-center gap-2">
         <span class="text-3xl">🇸🇪</span>
         <span class="font-extrabold text-xl">Svenska</span>
       </div>
-      <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-3 py-1">
-        <span class="text-duo-orange text-lg">🔥</span>
-        <span id="streak-count" class="font-bold text-sm">0</span>
+      <div class="flex items-center gap-2">
+        <button id="mute-btn" class="bg-duo-soft border border-duo-border rounded-full w-9 h-9 flex items-center justify-center text-base active:scale-95 transition-transform">🔊</button>
+        <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-3 py-1">
+          <span class="text-duo-blue text-lg">⚡</span>
+          <span id="xp-total" class="font-bold text-sm tabular-nums">0</span>
+        </div>
+        <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-3 py-1">
+          <span class="text-duo-orange text-lg">🔥</span>
+          <span id="streak-count" class="font-bold text-sm">0</span>
+          <span id="freeze-badge" class="hidden ml-1 text-duo-blue text-sm">❄️<span id="freeze-count" class="ml-0.5 text-xs font-bold">0</span></span>
+        </div>
       </div>
     </header>
 
@@ -115,6 +123,16 @@
       </div>
     </div>
 
+    <div class="bg-duo-soft border border-duo-border rounded-2xl p-4 mb-4">
+      <div class="flex justify-between items-baseline mb-2">
+        <span class="text-sm text-duo-ink/60">Maîtrise des mots fréquents</span>
+        <span id="mastery-count" class="text-xs font-bold text-duo-ink/60 tabular-nums">0 / 2000</span>
+      </div>
+      <div class="h-3 bg-duo-border rounded-full overflow-hidden">
+        <div id="mastery-bar" class="h-full bg-duo-blue transition-all" style="width:0%"></div>
+      </div>
+    </div>
+
     <div class="bg-duo-soft border border-duo-border rounded-2xl p-3 mb-4 text-center">
       <div class="text-xs text-duo-ink/60 uppercase tracking-wide mb-1">Départ Suède</div>
       <div class="font-extrabold text-lg">
@@ -131,16 +149,22 @@
        SCREEN: STUDY (flashcard)
        ============================================================ -->
   <section id="screen-study" class="hidden flex-col px-4 py-4">
-    <header class="flex items-center gap-3 mb-6">
+    <header class="flex items-center gap-3 mb-6 relative">
       <button id="quit-session-btn" class="text-duo-ink/40 text-3xl leading-none w-8 h-8 flex items-center justify-center">×</button>
       <div class="flex-1 h-3 bg-duo-border rounded-full overflow-hidden">
         <div id="session-bar" class="h-full bg-duo-green transition-all" style="width:0%"></div>
       </div>
       <span id="session-progress" class="text-xs font-bold text-duo-ink/60 tabular-nums w-12 text-right">0/25</span>
+      <div id="xp-floater-host" class="absolute right-0 top-8 pointer-events-none"></div>
     </header>
 
+    <!-- Badge "pack voyage" (visible si la carte courante vient du pack voyage) -->
+    <div id="pack-badge" class="hidden self-center -mt-3 mb-2 px-3 py-1 rounded-full bg-duo-orange/10 border border-duo-orange/30 text-xs font-bold text-duo-orange">
+      🧳 Voyage
+    </div>
+
     <div class="flex-1 flex flex-col items-center justify-center">
-      <!-- Card -->
+      <!-- ─── MODE: FLASH (classic flashcard) ─── -->
       <div id="card" class="w-full max-w-sm min-h-[280px] bg-white border-2 border-duo-border rounded-2xl shadow-duo flex flex-col items-center justify-center p-6 mb-4 cursor-pointer active:scale-[0.99] transition-transform">
 
         <!-- Front -->
@@ -162,9 +186,49 @@
           <div id="card-example" class="text-xs text-duo-ink/50 italic mt-2 px-2 hidden">—</div>
         </div>
       </div>
+
+      <!-- ─── MODE: MULTIPLE CHOICE (SV → EN) ─── -->
+      <div id="exercise-mc" class="hidden w-full max-w-sm flex-col gap-3 mb-4">
+        <div class="text-xs text-duo-ink/50 uppercase tracking-widest text-center">Que veut dire ce mot ?</div>
+        <div class="flex items-center justify-center gap-3 py-4">
+          <button id="mc-audio-btn" class="w-12 h-12 rounded-full bg-duo-blue/10 text-duo-blue flex items-center justify-center text-xl active:scale-95 transition-transform">🔊</button>
+          <div id="mc-swedish" class="text-3xl font-extrabold leading-tight">—</div>
+        </div>
+        <div id="mc-options" class="grid grid-cols-1 gap-2"></div>
+      </div>
+
+      <!-- ─── MODE: LISTENING (audio → SV) ─── -->
+      <div id="exercise-listen" class="hidden w-full max-w-sm flex-col gap-3 mb-4">
+        <div class="text-xs text-duo-ink/50 uppercase tracking-widest text-center">Quel mot entends-tu ?</div>
+        <div class="flex items-center justify-center gap-3 py-4">
+          <button id="listen-audio-btn" class="w-20 h-20 rounded-full bg-duo-blue text-white flex items-center justify-center text-3xl active:scale-95 transition-transform shadow-duo">🔊</button>
+          <button id="listen-slow-btn" class="w-12 h-12 rounded-full bg-duo-soft border border-duo-border text-duo-ink/70 flex items-center justify-center text-base font-bold active:scale-95 transition-transform">0.7×</button>
+        </div>
+        <div id="listen-options" class="grid grid-cols-1 gap-2"></div>
+      </div>
+
+      <!-- ─── MODE: REVERSE (EN → SV) ─── -->
+      <div id="exercise-reverse" class="hidden w-full max-w-sm flex-col gap-3 mb-4">
+        <div class="text-xs text-duo-ink/50 uppercase tracking-widest text-center">Comment dit-on en suédois ?</div>
+        <div class="flex items-center justify-center py-4">
+          <div id="reverse-english" class="text-3xl font-extrabold text-duo-green leading-tight text-center">—</div>
+        </div>
+        <div id="reverse-options" class="grid grid-cols-1 gap-2"></div>
+      </div>
+
+      <!-- ─── MODE: EN/ETT (article d'un nom) ─── -->
+      <div id="exercise-enett" class="hidden w-full max-w-sm flex-col gap-3 mb-4">
+        <div class="text-xs text-duo-ink/50 uppercase tracking-widest text-center">en ou ett ?</div>
+        <div class="flex items-center justify-center gap-3 py-4">
+          <button id="enett-audio-btn" class="w-12 h-12 rounded-full bg-duo-blue/10 text-duo-blue flex items-center justify-center text-xl active:scale-95 transition-transform">🔊</button>
+          <div id="enett-noun" class="text-3xl font-extrabold leading-tight">—</div>
+        </div>
+        <div id="enett-english" class="text-sm text-duo-ink/60 italic text-center mb-2">—</div>
+        <div id="enett-options" class="grid grid-cols-2 gap-3"></div>
+      </div>
     </div>
 
-    <!-- Feedback buttons (hidden until card is flipped) -->
+    <!-- Feedback buttons (FLASH only, hidden until card is flipped) -->
     <div id="feedback-buttons" class="hidden grid grid-cols-3 gap-2 mt-2">
       <button data-rating="hard" class="btn-duo btn-red flex flex-col items-center py-3">
         <span class="text-xl">❌</span>
@@ -180,9 +244,14 @@
       </button>
     </div>
 
-    <!-- Flip prompt (visible only on front) -->
+    <!-- Flip prompt (FLASH front only) -->
     <button id="flip-btn" class="btn-duo btn-blue w-full mt-2">
       Voir la réponse
+    </button>
+
+    <!-- Continue prompt (MC / Listen, après réponse) -->
+    <button id="continue-btn" class="btn-duo btn-green w-full mt-2 hidden">
+      Continuer
     </button>
   </section>
 
@@ -195,18 +264,22 @@
     <p class="text-duo-ink/60 text-center mb-8">Bra jobbat !</p>
 
     <div class="w-full max-w-sm bg-duo-soft border border-duo-border rounded-2xl p-5 mb-4">
-      <div class="grid grid-cols-3 gap-2 text-center">
+      <div class="grid grid-cols-4 gap-2 text-center">
         <div>
           <div id="recap-total" class="text-2xl font-extrabold">0</div>
           <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Cartes</div>
         </div>
         <div>
           <div id="recap-new" class="text-2xl font-extrabold text-duo-blue">0</div>
-          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Nouvelles</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Neuves</div>
         </div>
         <div>
           <div id="recap-accuracy" class="text-2xl font-extrabold text-duo-green">0%</div>
-          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Réussite</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">Score</div>
+        </div>
+        <div>
+          <div id="recap-xp" class="text-2xl font-extrabold text-duo-orange">+0</div>
+          <div class="text-xs text-duo-ink/60 uppercase tracking-wide">XP</div>
         </div>
       </div>
     </div>

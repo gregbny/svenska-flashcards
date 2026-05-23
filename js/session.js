@@ -12,6 +12,7 @@
 
 import { getAllCards } from './db.js';
 import { DEFAULT_STATE, sm2Apply, isDue } from './sm2.js';
+import { buildExercise } from './exercises.js';
 
 const LS_KEY = 'svenska.state.v1';
 const PRIORITY_LIMIT = 2000;
@@ -39,22 +40,35 @@ function ensureState(s) {
     dailyLog: {},
     streak: 0,
     lastSessionDate: null,
+    freezes: 0,
+    freezeEarnedAtStreak: 0,
     ...s,
+    // garde-fou : s peut être null ou ne pas contenir xp (anciennes sauvegardes)
+    xp: { total: 0, byDay: {}, ...(s?.xp || {}) },
   };
 }
+
+const FREEZE_MAX = 2;
+const FREEZE_EARN_EVERY = 7; // un freeze tous les 7 jours de streak
+
+const XP_BY_RATING = { hard: 5, good: 10, easy: 15 };
+const XP_DAILY_GOAL_BONUS = 25;
 
 // ─── Module state ───────────────────────────────────────────────
 let _queue = [];
 let _index = 0;
 let _requeue = new Set();
-let _meta = { done: 0, total: 0, newSeen: 0, correct: 0 };
+let _meta = { done: 0, total: 0, newSeen: 0, correct: 0, xpGained: 0 };
 let _globalState = null;
+let _allCards = []; // pool complet pour les distracteurs
+let _currentExercise = null;
 
 // ─── Session bootstrap ──────────────────────────────────────────
 export async function startSession({ target = 25, maxNew = 10 } = {}) {
   _globalState = ensureState(loadState());
 
   const allCards = await getAllCards();
+  _allCards = allCards;
   const now = Date.now();
   const { cardStates } = _globalState;
 
@@ -94,7 +108,8 @@ export async function startSession({ target = 25, maxNew = 10 } = {}) {
   _queue = shuffle([...reviews, ...fresh]);
   _index = 0;
   _requeue.clear();
-  _meta = { done: 0, total: _queue.length, newSeen: fresh.length, correct: 0 };
+  _meta = { done: 0, total: _queue.length, newSeen: fresh.length, correct: 0, xpGained: 0, goalBonus: false };
+  _currentExercise = null;
 }
 
 function shuffle(arr) {
@@ -108,6 +123,61 @@ function shuffle(arr) {
 // ─── Card access ────────────────────────────────────────────────
 export function currentCard() {
   return _queue[_index] ?? null;
+}
+
+/**
+ * Construit (et cache) l'exercice pour la carte courante.
+ * Le cache est invalidé à chaque rateCard().
+ */
+export function currentExercise() {
+  if (_currentExercise) return _currentExercise;
+  const card = currentCard();
+  if (!card) return null;
+  const cs = _globalState.cardStates[card.id];
+  _currentExercise = buildExercise(card, cs, _allCards);
+  return _currentExercise;
+}
+
+export function peekNextCard() {
+  return _queue[_index + 1] ?? null;
+}
+
+/**
+ * Compteurs pour le home (avant d'avoir démarré une session).
+ * - newAvailable : cartes jamais vues, plafonnées à maxNew (par défaut 10)
+ * - reviewsDue   : cartes dues aujourd'hui
+ */
+/**
+ * Stats de maîtrise : combien de cartes parmi les `limit` plus fréquentes
+ * sont considérées comme apprises (reps ≥ 3 dans SM-2 ≈ intervalle ≥ 15j).
+ */
+export async function masteryStats({ limit = 2000 } = {}) {
+  const gs = _globalState ?? ensureState(loadState());
+  const allCards = await getAllCards();
+  // Top N par fréquence (freq_rank ascendant) parmi les cartes ayant un rank défini
+  const ranked = allCards
+    .filter((c) => Number.isFinite(c.freq_rank))
+    .sort((a, b) => a.freq_rank - b.freq_rank)
+    .slice(0, limit);
+  let mastered = 0;
+  for (const c of ranked) {
+    const s = gs.cardStates?.[c.id];
+    if (s && (s.reps ?? 0) >= 3) mastered += 1;
+  }
+  return { mastered, total: ranked.length };
+}
+
+export async function homeCounters({ maxNew = 10 } = {}) {
+  const gs = _globalState ?? ensureState(loadState());
+  const allCards = await getAllCards();
+  const now = Date.now();
+  let newRaw = 0, due = 0;
+  for (const c of allCards) {
+    const s = gs.cardStates?.[c.id];
+    if (!s) newRaw += 1;
+    else if (isDue(s, now)) due += 1;
+  }
+  return { newAvailable: Math.min(newRaw, maxNew), reviewsDue: due };
 }
 
 // ─── Rating ─────────────────────────────────────────────────────
@@ -131,10 +201,36 @@ export async function rateCard(rating) {
   }
 
   _index += 1;
+  _currentExercise = null;
 
+  const xpGained = _awardXP(rating);
   _updateDailyLog(rating);
   _updateStreak();
   saveState(_globalState);
+  return { xpGained };
+}
+
+/**
+ * Crédite l'XP pour la note donnée + un bonus unique quand
+ * on franchit l'objectif quotidien (25 cartes).
+ * Retourne l'XP total gagné par ce call (utile pour le floater UI).
+ */
+function _awardXP(rating) {
+  const today = todayStr();
+  let gained = XP_BY_RATING[rating] ?? 0;
+
+  // Bonus quand on franchit le seuil de l'objectif quotidien
+  const doneBefore = _meta.done - 1;
+  const doneAfter = _meta.done;
+  if (!_meta.goalBonus && doneBefore < 25 && doneAfter >= 25) {
+    gained += XP_DAILY_GOAL_BONUS;
+    _meta.goalBonus = true;
+  }
+
+  _globalState.xp.total = (_globalState.xp.total ?? 0) + gained;
+  _globalState.xp.byDay[today] = (_globalState.xp.byDay[today] ?? 0) + gained;
+  _meta.xpGained += gained;
+  return gained;
 }
 
 function _updateDailyLog(rating) {
@@ -152,11 +248,36 @@ function _updateStreak() {
   if (!last) {
     _globalState.streak = 1;
   } else if (last === today) {
-    // same day, no change
+    // même jour, rien à faire
   } else {
     const diff = daysBetween(last, today);
-    _globalState.streak = diff === 1 ? _globalState.streak + 1 : 1;
+    if (diff === 1) {
+      _globalState.streak += 1;
+    } else if (diff >= 2 && (_globalState.freezes ?? 0) > 0) {
+      // Trou rattrapé par un freeze : on consomme 1 freeze par jour manqué
+      // (jusqu'au stock dispo, ensuite reset).
+      const gaps = diff - 1;
+      const used = Math.min(gaps, _globalState.freezes);
+      _globalState.freezes -= used;
+      if (used === gaps) {
+        _globalState.streak += 1; // un jour de pratique aujourd'hui = +1
+      } else {
+        _globalState.streak = 1;  // pas assez de freezes pour combler
+      }
+    } else {
+      _globalState.streak = 1;
+    }
   }
+
+  // Earn un freeze à chaque palier de 7 jours, capé à FREEZE_MAX
+  const earnedAt = _globalState.freezeEarnedAtStreak ?? 0;
+  if (_globalState.streak >= earnedAt + FREEZE_EARN_EVERY) {
+    _globalState.freezeEarnedAtStreak = _globalState.streak - (_globalState.streak % FREEZE_EARN_EVERY);
+    if ((_globalState.freezes ?? 0) < FREEZE_MAX) {
+      _globalState.freezes = (_globalState.freezes ?? 0) + 1;
+    }
+  }
+
   _globalState.lastSessionDate = today;
 }
 
@@ -166,15 +287,18 @@ function daysBetween(a, b) {
 
 // ─── Stats ──────────────────────────────────────────────────────
 export function sessionStats() {
+  // Lazy load depuis localStorage si aucune session active (ex: écran home après reload)
+  const gs = _globalState ?? ensureState(loadState());
+
   const today = todayStr();
-  const log = _globalState?.dailyLog?.[today] ?? { done: 0, correct: 0 };
-  const cs = _globalState?.cardStates ?? {};
+  const log = gs?.dailyLog?.[today] ?? { done: 0, correct: 0 };
+  const cs = gs?.cardStates ?? {};
   const now = Date.now();
 
   const reviewsDue = Object.values(cs).filter((s) => isDue(s, now)).length;
 
   return {
-    streak: _globalState?.streak ?? 0,
+    streak: gs?.streak ?? 0,
     doneToday: log.done,
     newAvailable: 0,       // computed lazily by startSession, left simple here
     reviewsDue,
@@ -182,5 +306,9 @@ export function sessionStats() {
     sessionTotal: _meta.total,
     sessionNew: _meta.newSeen,
     sessionCorrect: _meta.correct,
+    sessionXP: _meta.xpGained,
+    xpTotal: gs?.xp?.total ?? 0,
+    xpToday: gs?.xp?.byDay?.[today] ?? 0,
+    freezes: gs?.freezes ?? 0,
   };
 }

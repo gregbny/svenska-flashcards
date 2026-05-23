@@ -4,17 +4,20 @@
  * L'audio n'est PAS dans le cache SW — il est stocké en IndexedDB après import manuel.
  */
 
-const VERSION = 'svenska-v4';
+const VERSION = 'svenska-v5';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
+  './travel.json',
   './js/app.js',
   './js/db.js',
   './js/sm2.js',
   './js/session.js',
   './js/audio.js',
+  './js/sound.js',
+  './js/exercises.js',
   './js/import.js',
   './js/ui.js',
   './icons/icon-192.png',
@@ -54,8 +57,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // cards.json: network-first, fallback cache
-  if (url.pathname.endsWith('/cards.json')) {
+  // cards.json + travel.json: network-first, fallback cache
+  if (url.pathname.endsWith('/cards.json') || url.pathname.endsWith('/travel.json')) {
     event.respondWith(
       fetch(request)
         .then((res) => {
