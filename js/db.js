@@ -57,9 +57,17 @@ export function putAudio(name, blob) {
   return wrap(tx('audio', 'readwrite').put({ name, blob }));
 }
 
-export async function bulkPutCards(cards) {
-  const store = tx('cards', 'readwrite');
-  await Promise.all(cards.map((c) => wrap(store.put(c))));
+export async function bulkPutCards(cards, { chunkSize = 500 } = {}) {
+  // Chunké pour éviter qu'une seule transaction monopolise IDB
+  // pendant des secondes (8000+ puts en un coup peut geler les autres
+  // lectures pendant que la transaction reste ouverte).
+  for (let i = 0; i < cards.length; i += chunkSize) {
+    const slice = cards.slice(i, i + chunkSize);
+    const store = tx('cards', 'readwrite');
+    await Promise.all(slice.map((c) => wrap(store.put(c))));
+    // Laisse l'event loop respirer entre les chunks
+    await new Promise((r) => setTimeout(r, 0));
+  }
 }
 
 export function getAllCards() {

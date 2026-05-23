@@ -4,7 +4,7 @@
  * L'audio n'est PAS dans le cache SW — il est stocké en IndexedDB après import manuel.
  */
 
-const VERSION = 'svenska-v6';
+const VERSION = 'svenska-v7';
 const SHELL = [
   './',
   './index.html',

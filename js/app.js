@@ -129,7 +129,8 @@ async function loadCardsJson({ force = false } = {}) {
   if (merged.length) {
     await bulkPutCards(merged);
     // Note le hash courant pour le futur diff non-bloquant
-    const sig = `${deckCards.length}:${deckCards[0]?.id ?? ''}:${deckCards.at(-1)?.id ?? ''}:${travelCards.length}`;
+    const last = deckCards[deckCards.length - 1];
+    const sig = `${deckCards.length}:${deckCards[0]?.id ?? ''}:${last?.id ?? ''}:${travelCards.length}`;
     await setMeta('cardsSig', sig);
   }
 }
@@ -138,6 +139,12 @@ async function loadCardsJson({ force = false } = {}) {
  * Refresh des cartes en arrière-plan, sans bloquer l'UI.
  * Détecte un changement de contenu via une signature légère
  * (count + premier/dernier id). Si différent, re-bulkPut.
+ *
+ * Cas particulier : si la signature n'a jamais été stockée (premier
+ * lancement après l'introduction de ce mécanisme), on la *seed*
+ * sans re-bulkPut. Sinon, tous les users existants déclencheraient
+ * un upsert massif au boot et l'app paraîtrait gelée le temps que
+ * la transaction IDB se termine.
  */
 function scheduleBackgroundRefresh() {
   const run = async () => {
@@ -150,22 +157,27 @@ function scheduleBackgroundRefresh() {
       const deckRaw = await deckRes.json();
       const travelRaw = (travelRes && travelRes.ok) ? await travelRes.json() : [];
 
-      const sig = `${deckRaw.length}:${deckRaw[0]?.id ?? ''}:${deckRaw.at(-1)?.id ?? ''}:${travelRaw.length}`;
-      const prev = await getMeta('cardsSig');
-      if (prev === sig) return; // contenu inchangé, rien à faire
+      const lastDeck = deckRaw[deckRaw.length - 1];
+      const sig = `${deckRaw.length}:${deckRaw[0]?.id ?? ''}:${lastDeck?.id ?? ''}:${travelRaw.length}`;
 
-      // Contenu modifié → on relance le chemin de chargement complet (forcé)
+      const prev = await getMeta('cardsSig');
+      if (!prev) {
+        // Migration : on se contente d'enregistrer la signature actuelle.
+        // Les corrections futures déclencheront un vrai refresh.
+        await setMeta('cardsSig', sig);
+        return;
+      }
+      if (prev === sig) return; // contenu inchangé
+
+      // Contenu modifié → on relance le chemin complet (forcé)
       await loadCardsJson({ force: true });
     } catch (err) {
       console.warn('background card refresh failed', err);
     }
   };
-  // Démarre quand le thread est tranquille pour ne pas concurrencer le boot
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(run, { timeout: 5000 });
-  } else {
-    setTimeout(run, 2000);
-  }
+  // Démarre bien après le boot pour ne JAMAIS concurrencer un
+  // premier "Commencer la session" qui aurait besoin de lire IDB.
+  setTimeout(run, 15000);
 }
 
 // ───────────────────────── Setup screen ─────────────────────────
