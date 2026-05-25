@@ -130,7 +130,7 @@ async function loadCardsJson({ force = false } = {}) {
     await bulkPutCards(merged);
     // Note le hash courant pour le futur diff non-bloquant
     const last = deckCards[deckCards.length - 1];
-    const sig = `${deckCards.length}:${deckCards[0]?.id ?? ''}:${last?.id ?? ''}:${travelCards.length}`;
+    const sig = `v2:${deckCards.length}:${deckCards[0]?.id ?? ''}:${last?.id ?? ''}:${travelCards.length}`;
     await setMeta('cardsSig', sig);
   }
 }
@@ -158,7 +158,7 @@ function scheduleBackgroundRefresh() {
       const travelRaw = (travelRes && travelRes.ok) ? await travelRes.json() : [];
 
       const lastDeck = deckRaw[deckRaw.length - 1];
-      const sig = `${deckRaw.length}:${deckRaw[0]?.id ?? ''}:${lastDeck?.id ?? ''}:${travelRaw.length}`;
+      const sig = `v2:${deckRaw.length}:${deckRaw[0]?.id ?? ''}:${lastDeck?.id ?? ''}:${travelRaw.length}`;
 
       const prev = await getMeta('cardsSig');
       if (!prev) {
@@ -361,8 +361,15 @@ function renderFlash(c) {
 
   const metaParts = [c.pos, c.gender].filter(Boolean);
   toggleField('card-meta', metaParts.join(' · '));
-  toggleField('card-alternatives', c.alternatives);
-  toggleField('card-example', c.example);
+
+  const enr = c.enrichment || {};
+  renderConjugation(c, enr.conjugation);
+  toggleField('card-example-sv', enr.example_sv);
+  toggleField('card-example-fr', enr.example_fr);
+
+  // Fallback to raw fields only if enrichment absent
+  toggleField('card-alternatives', enr.conjugation ? null : c.alternatives);
+  toggleField('card-example', enr.example_sv ? null : c.example);
 
   playCardAudio(c).catch(() => {});
 }
@@ -441,6 +448,25 @@ function showXpFloater(amount) {
   el.textContent = `+${amount} XP`;
   host.appendChild(el);
   setTimeout(() => el.remove(), 1200);
+}
+
+function renderConjugation(card, conj) {
+  const el = document.getElementById('card-conjugation');
+  if (!conj || !conj.present) {
+    el.classList.add('hidden');
+    return;
+  }
+  const rows = [
+    ['présent ', conj.present,   'jag '],
+    ['prétérit', conj.preterite, 'jag '],
+    ['supin   ', conj.supine,    'har '],
+  ].filter(([, v]) => v);
+  el.innerHTML = rows
+    .map(([label, form, pronoun]) =>
+      `<div><span class="text-duo-ink/40">${label}</span> · <span class="font-bold">${pronoun}${form}</span></div>`
+    )
+    .join('');
+  el.classList.remove('hidden');
 }
 
 function toggleField(id, value) {
