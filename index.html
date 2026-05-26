@@ -115,23 +115,23 @@
        SCREEN: HOME (daily session entry)
        ============================================================ -->
   <section id="screen-home" class="hidden flex-col px-6 py-5">
-    <header class="flex items-center justify-between mb-5 gap-2">
-      <div class="flex items-center gap-2">
-        <span class="text-3xl">🇸🇪</span>
-        <span class="font-extrabold text-xl">Svenska</span>
+    <header class="flex items-center justify-between mb-5 gap-1.5">
+      <div class="flex items-center gap-1.5 min-w-0">
+        <span class="text-2xl">🇸🇪</span>
+        <span class="font-extrabold text-lg truncate">Svenska</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="mute-btn" class="bg-duo-soft border border-duo-border rounded-full w-9 h-9 flex items-center justify-center text-base active:scale-95 transition-transform">🔊</button>
-        <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-3 py-1">
-          <span class="text-duo-blue text-lg">⚡</span>
-          <span id="xp-total" class="font-bold text-sm tabular-nums">0</span>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="mute-btn" class="bg-duo-soft border border-duo-border rounded-full w-8 h-8 flex items-center justify-center text-sm active:scale-95 transition-transform">🔊</button>
+        <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-2 py-1">
+          <span class="text-duo-blue text-base">⚡</span>
+          <span id="xp-total" class="font-bold text-xs tabular-nums">0</span>
         </div>
-        <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-3 py-1">
-          <span class="text-duo-orange text-lg">🔥</span>
-          <span id="streak-count" class="font-bold text-sm">0</span>
-          <span id="freeze-badge" class="hidden ml-1 text-duo-blue text-sm">❄️<span id="freeze-count" class="ml-0.5 text-xs font-bold">0</span></span>
+        <div class="flex items-center gap-1 bg-duo-soft border border-duo-border rounded-full px-2 py-1">
+          <span class="text-duo-orange text-base">🔥</span>
+          <span id="streak-count" class="font-bold text-xs">0</span>
+          <span id="freeze-badge" class="hidden ml-0.5 text-duo-blue text-xs">❄️<span id="freeze-count" class="ml-0.5 text-[10px] font-bold">0</span></span>
         </div>
-        <button id="account-btn" class="bg-duo-soft border border-duo-border rounded-full w-9 h-9 flex items-center justify-center text-base active:scale-95 transition-transform" aria-label="Compte">👤</button>
+        <button id="account-btn" class="bg-duo-soft border border-duo-border rounded-full w-8 h-8 flex items-center justify-center text-sm active:scale-95 transition-transform" aria-label="Compte">👤</button>
       </div>
     </header>
 
