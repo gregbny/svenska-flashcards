@@ -167,6 +167,29 @@ export async function masteryStats({ limit = 2000 } = {}) {
   return { mastered, total: ranked.length };
 }
 
+export async function masteryByCefr() {
+  const gs = _globalState ?? ensureState(loadState());
+  const buckets = {}; // { A1: {mastered, total, seen}, ... }
+  const allCards = await getAllCards();
+  for (const c of allCards) {
+    const lvl = c.cefr;
+    if (!lvl) continue;
+    const b = buckets[lvl] || (buckets[lvl] = { mastered: 0, total: 0, seen: 0 });
+    b.total += 1;
+    const s = gs.cardStates?.[c.id];
+    if (s) {
+      b.seen += 1;
+      if ((s.reps ?? 0) >= 3) b.mastered += 1;
+    }
+  }
+  return buckets;
+}
+
+export async function totalSeen() {
+  const gs = _globalState ?? ensureState(loadState());
+  return Object.keys(gs.cardStates ?? {}).length;
+}
+
 export async function homeCounters({ maxNew = 10 } = {}) {
   const gs = _globalState ?? ensureState(loadState());
   const allCards = await getAllCards();

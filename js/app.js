@@ -12,13 +12,18 @@
 
 import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
-import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats } from './session.js';
+import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen } from './session.js';
 import { runImport } from './import.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
 import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sound.js';
 
-const DEPART_DATE = new Date('2026-07-20T00:00:00');
+const DEFAULT_GOAL_DATE = '2026-07-20';
 const DAILY_TARGET = 25;
+
+async function getGoalDate() {
+  const v = await getMeta('goalDate');
+  return v || DEFAULT_GOAL_DATE;
+}
 
 const state = {
   flipped: false,
@@ -183,6 +188,7 @@ function scheduleBackgroundRefresh() {
 // ───────────────────────── Setup screen ─────────────────────────
 function showSetup() {
   ui.show('setup');
+  renderInstallHint();
 
   const input = document.getElementById('audio-zip-input');
   input.onchange = async (e) => {
@@ -234,8 +240,10 @@ async function showHome() {
   document.getElementById('today-bar').style.width = `${Math.round(((stats.doneToday ?? 0) / DAILY_TARGET) * 100)}%`;
   document.getElementById('new-count').textContent = counters.newAvailable;
   document.getElementById('review-count').textContent = counters.reviewsDue;
-  document.getElementById('days-left').textContent = daysUntilDepart();
+  document.getElementById('days-left').textContent = await daysUntilDepart();
   document.getElementById('xp-total').textContent = stats.xpTotal ?? 0;
+
+  document.getElementById('account-btn').onclick = () => showAccount();
 
   // Mute toggle
   const muteBtn = document.getElementById('mute-btn');
@@ -249,9 +257,91 @@ async function showHome() {
   };
 }
 
-function daysUntilDepart() {
+function renderInstallHint() {
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+  if (isStandalone) return; // déjà installée
+
+  const hint = document.getElementById('install-hint');
+  if (!hint) return;
+  hint.classList.remove('hidden');
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const target = isIOS ? 'ios' : isAndroid ? 'android' : 'desktop';
+  document.getElementById(`install-hint-${target}`).classList.remove('hidden');
+}
+
+async function daysUntilDepart() {
+  const g = await getGoalDate();
+  const target = new Date(`${g}T00:00:00`);
   const now = new Date();
-  return Math.max(0, Math.ceil((DEPART_DATE - now) / 86400000));
+  return Math.max(0, Math.ceil((target - now) / 86400000));
+}
+
+const CEFR_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const CEFR_COLOR = { A1: 'bg-duo-green', A2: 'bg-duo-green', B1: 'bg-duo-blue', B2: 'bg-duo-blue', C1: 'bg-duo-orange', C2: 'bg-duo-orange' };
+
+async function showAccount() {
+  ui.show('account');
+
+  const [stats, mastery, byCefr, seen, goal] = await Promise.all([
+    Promise.resolve(sessionStats()),
+    masteryStats({ limit: 2000 }),
+    masteryByCefr(),
+    totalSeen(),
+    getGoalDate(),
+  ]);
+
+  document.getElementById('account-xp').textContent = stats.xpTotal ?? 0;
+  document.getElementById('account-streak').textContent = stats.streak ?? 0;
+  document.getElementById('account-seen').textContent = seen;
+  document.getElementById('account-mastery-count').textContent = `${mastery.mastered} / ${mastery.total || 2000}`;
+  document.getElementById('account-mastery-bar').style.width =
+    `${Math.round((mastery.mastered / (mastery.total || 2000)) * 100)}%`;
+
+  const goalInput = document.getElementById('account-goal-date');
+  goalInput.value = goal;
+  const refreshDays = async () => {
+    document.getElementById('account-days-left').textContent = await daysUntilDepart();
+  };
+  refreshDays();
+  goalInput.onchange = async () => {
+    const v = goalInput.value;
+    if (!v) return;
+    await setMeta('goalDate', v);
+    refreshDays();
+  };
+
+  const rows = document.getElementById('account-cefr-rows');
+  rows.innerHTML = '';
+  for (const lvl of CEFR_ORDER) {
+    const b = byCefr[lvl];
+    if (!b) continue;
+    const pct = b.total ? Math.round((b.mastered / b.total) * 100) : 0;
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="flex justify-between text-xs mb-1">
+        <span class="font-bold">${lvl}</span>
+        <span class="text-duo-ink/60 tabular-nums">${b.mastered} / ${b.total} · ${pct}%</span>
+      </div>
+      <div class="h-2 bg-duo-border rounded-full overflow-hidden">
+        <div class="h-full ${CEFR_COLOR[lvl]}" style="width:${pct}%"></div>
+      </div>
+    `;
+    rows.appendChild(div);
+  }
+
+  document.getElementById('account-back-btn').onclick = () => showHome();
+  document.getElementById('account-reset-btn').onclick = async () => {
+    if (!confirm('Réinitialiser toutes les données ? Cette action est irréversible.')) return;
+    const dbs = await (indexedDB.databases?.() ?? Promise.resolve([]));
+    for (const d of dbs) indexedDB.deleteDatabase(d.name);
+    localStorage.clear();
+    location.reload();
+  };
 }
 
 // ───────────────────────── Study screen ─────────────────────────
