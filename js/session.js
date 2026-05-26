@@ -151,36 +151,55 @@ export function peekNextCard() {
  * Stats de maîtrise : combien de cartes parmi les `limit` plus fréquentes
  * sont considérées comme apprises (reps ≥ 3 dans SM-2 ≈ intervalle ≥ 15j).
  */
+// "Mastery" granularity: 0 = never seen, 1 = reps 1 (revoie demain),
+// 2 = reps 2 (revoie dans ~6j), 3+ = consolidé (>=15j). On affiche
+// une progression pondérée 0..1 = somme(min(reps,3))/(N*3) pour que
+// la barre monte dès le premier passage, sans tromper sur ce qui est
+// vraiment consolidé (compteur "mastered" séparé).
+const MASTERY_TARGET_REPS = 3;
+function _progressFromStates(states) {
+  let sum = 0;
+  for (const s of states) sum += Math.min(s?.reps ?? 0, MASTERY_TARGET_REPS);
+  return states.length ? sum / (states.length * MASTERY_TARGET_REPS) : 0;
+}
+
 export async function masteryStats({ limit = 2000 } = {}) {
   const gs = _globalState ?? ensureState(loadState());
   const allCards = await getAllCards();
-  // Top N par fréquence (freq_rank ascendant) parmi les cartes ayant un rank défini
   const ranked = allCards
     .filter((c) => Number.isFinite(c.freq_rank))
     .sort((a, b) => a.freq_rank - b.freq_rank)
     .slice(0, limit);
-  let mastered = 0;
-  for (const c of ranked) {
-    const s = gs.cardStates?.[c.id];
-    if (s && (s.reps ?? 0) >= 3) mastered += 1;
-  }
-  return { mastered, total: ranked.length };
+  const states = ranked.map((c) => gs.cardStates?.[c.id]);
+  const mastered = states.filter((s) => s && (s.reps ?? 0) >= MASTERY_TARGET_REPS).length;
+  const seen = states.filter(Boolean).length;
+  return {
+    mastered,
+    seen,
+    total: ranked.length,
+    progress: _progressFromStates(states),
+  };
 }
 
 export async function masteryByCefr() {
   const gs = _globalState ?? ensureState(loadState());
-  const buckets = {}; // { A1: {mastered, total, seen}, ... }
+  const buckets = {};
   const allCards = await getAllCards();
   for (const c of allCards) {
     const lvl = c.cefr;
     if (!lvl) continue;
-    const b = buckets[lvl] || (buckets[lvl] = { mastered: 0, total: 0, seen: 0 });
+    const b = buckets[lvl] || (buckets[lvl] = { mastered: 0, total: 0, seen: 0, _states: [] });
     b.total += 1;
     const s = gs.cardStates?.[c.id];
+    b._states.push(s);
     if (s) {
       b.seen += 1;
-      if ((s.reps ?? 0) >= 3) b.mastered += 1;
+      if ((s.reps ?? 0) >= MASTERY_TARGET_REPS) b.mastered += 1;
     }
+  }
+  for (const b of Object.values(buckets)) {
+    b.progress = _progressFromStates(b._states);
+    delete b._states;
   }
   return buckets;
 }

@@ -229,9 +229,9 @@ async function showHome() {
     homeCounters({ maxNew: 10 }),
     masteryStats({ limit: 2000 }),
   ]);
-  document.getElementById('mastery-count').textContent = `${mastery.mastered} / ${mastery.total || 2000}`;
+  document.getElementById('mastery-count').textContent = `${mastery.seen} vues · ${mastery.mastered} maîtrisées`;
   document.getElementById('mastery-bar').style.width =
-    `${Math.round((mastery.mastered / (mastery.total || 2000)) * 100)}%`;
+    `${Math.round((mastery.progress ?? 0) * 100)}%`;
   document.getElementById('streak-count').textContent = stats.streak ?? 0;
   const freezes = stats.freezes ?? 0;
   document.getElementById('freeze-badge').classList.toggle('hidden', freezes === 0);
@@ -298,9 +298,9 @@ async function showAccount() {
   document.getElementById('account-xp').textContent = stats.xpTotal ?? 0;
   document.getElementById('account-streak').textContent = stats.streak ?? 0;
   document.getElementById('account-seen').textContent = seen;
-  document.getElementById('account-mastery-count').textContent = `${mastery.mastered} / ${mastery.total || 2000}`;
+  document.getElementById('account-mastery-count').textContent = `${mastery.seen} vues · ${mastery.mastered} maîtrisées / ${mastery.total || 2000}`;
   document.getElementById('account-mastery-bar').style.width =
-    `${Math.round((mastery.mastered / (mastery.total || 2000)) * 100)}%`;
+    `${Math.round((mastery.progress ?? 0) * 100)}%`;
 
   const goalInput = document.getElementById('account-goal-date');
   goalInput.value = goal;
@@ -320,12 +320,12 @@ async function showAccount() {
   for (const lvl of CEFR_ORDER) {
     const b = byCefr[lvl];
     if (!b) continue;
-    const pct = b.total ? Math.round((b.mastered / b.total) * 100) : 0;
+    const pct = Math.round((b.progress ?? 0) * 100);
     const div = document.createElement('div');
     div.innerHTML = `
       <div class="flex justify-between text-xs mb-1">
         <span class="font-bold">${lvl}</span>
-        <span class="text-duo-ink/60 tabular-nums">${b.mastered} / ${b.total} · ${pct}%</span>
+        <span class="text-duo-ink/60 tabular-nums">${b.seen} vues · ${b.mastered} OK / ${b.total} · ${pct}%</span>
       </div>
       <div class="h-2 bg-duo-border rounded-full overflow-hidden">
         <div class="h-full ${CEFR_COLOR[lvl]}" style="width:${pct}%"></div>
