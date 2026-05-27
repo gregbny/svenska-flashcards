@@ -13,12 +13,13 @@
 import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
 import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen } from './session.js';
-import { runImport } from './import.js';
+import { runImport, fetchAndImport } from './import.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
 import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sound.js';
 
 const DEFAULT_GOAL_DATE = '2026-07-20';
 const DAILY_TARGET = 25;
+const AUDIO_PACK_URL = 'https://github.com/gregbny/svenska-flashcards/releases/download/v1.0-audio/media.zip';
 
 async function getGoalDate() {
   const v = await getMeta('goalDate');
@@ -190,26 +191,43 @@ function showSetup() {
   ui.show('setup');
   renderInstallHint();
 
-  const input = document.getElementById('audio-zip-input');
-  input.onchange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || state.importing) return;
+  const updateProgress = (done, total, label) => {
+    document.getElementById('import-label').textContent = label || 'Extraction…';
+    if (label === 'Téléchargement…' && total) {
+      const mb = (n) => (n / 1024 / 1024).toFixed(1);
+      document.getElementById('import-count').textContent = `${mb(done)} / ${mb(total)} MB`;
+    } else {
+      document.getElementById('import-count').textContent = `${done} / ${total}`;
+    }
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('import-bar').style.width = `${pct}%`;
+  };
+
+  const runFlow = async (fn) => {
+    if (state.importing) return;
     state.importing = true;
     document.getElementById('import-progress').classList.remove('hidden');
-
+    document.getElementById('download-audio-btn').disabled = true;
     try {
-      await runImport(file, (done, total, label) => {
-        document.getElementById('import-label').textContent = label || 'Extraction…';
-        document.getElementById('import-count').textContent = `${done} / ${total}`;
-        const pct = total ? Math.round((done / total) * 100) : 0;
-        document.getElementById('import-bar').style.width = `${pct}%`;
-      });
+      await fn();
       showHome();
     } catch (err) {
       alert('Erreur pendant l\'import : ' + err.message);
     } finally {
       state.importing = false;
+      document.getElementById('download-audio-btn').disabled = false;
     }
+  };
+
+  document.getElementById('download-audio-btn').onclick = () => {
+    runFlow(() => fetchAndImport(AUDIO_PACK_URL, updateProgress));
+  };
+
+  const input = document.getElementById('audio-zip-input');
+  input.onchange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    runFlow(() => runImport(file, updateProgress));
   };
 
   document.getElementById('skip-audio-btn').onclick = () => {

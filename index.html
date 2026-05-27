@@ -83,18 +83,17 @@
       </div>
     </div>
 
-    <div class="w-full max-w-sm bg-duo-soft border border-duo-border rounded-2xl p-5 mb-6">
-      <ol class="text-sm space-y-2 text-duo-ink/80">
-        <li><span class="font-bold text-duo-ink">1.</span> Sur PC, zippe le dossier <code class="bg-white px-1 rounded">media/</code></li>
-        <li><span class="font-bold text-duo-ink">2.</span> AirDrop le zip vers ton iPhone</li>
-        <li><span class="font-bold text-duo-ink">3.</span> Sélectionne-le ci-dessous</li>
-      </ol>
-    </div>
+    <button id="download-audio-btn" class="btn-duo btn-green w-full max-w-sm">
+      Télécharger l'audio (167 MB)
+    </button>
 
-    <label class="btn-duo btn-green w-full max-w-sm cursor-pointer">
-      <input id="audio-zip-input" type="file" accept=".zip" class="hidden" />
-      Importer l'audio (.zip)
-    </label>
+    <details class="w-full max-w-sm mt-4">
+      <summary class="text-xs text-duo-ink/50 text-center cursor-pointer">Déjà le zip en local ? Importer manuellement</summary>
+      <label class="btn-duo bg-duo-soft border border-duo-border w-full mt-3 cursor-pointer text-duo-ink/80">
+        <input id="audio-zip-input" type="file" accept=".zip" class="hidden" />
+        Importer un .zip local
+      </label>
+    </details>
 
     <div id="import-progress" class="hidden w-full max-w-sm mt-6">
       <div class="flex justify-between text-xs text-duo-ink/60 mb-1">

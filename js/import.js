@@ -27,6 +27,33 @@ function ext(name) {
   return name.split('.').pop().toLowerCase();
 }
 
+/**
+ * Télécharge un zip distant en streaming avec barre de progression,
+ * puis l'importe comme un fichier local.
+ *
+ * onProgress(done, total, label):
+ *  - phase download : label="Téléchargement…", done/total en octets
+ *  - phase import   : label="Import audio…",   done/total en fichiers
+ */
+export async function fetchAndImport(url, onProgress) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const total = Number(res.headers.get('content-length')) || 0;
+
+  const reader = res.body.getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    onProgress(received, total, 'Téléchargement…');
+  }
+  const blob = new Blob(chunks, { type: 'application/zip' });
+  await runImport(blob, onProgress);
+}
+
 export async function runImport(file, onProgress) {
   const JSZip = await ensureJSZip();
   const zip = await JSZip.loadAsync(file);
