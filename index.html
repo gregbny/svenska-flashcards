@@ -83,17 +83,23 @@
       </div>
     </div>
 
-    <button id="download-audio-btn" class="btn-duo btn-green w-full max-w-sm">
-      Télécharger l'audio (167 MB)
-    </button>
+    <div class="w-full max-w-sm flex flex-col gap-3">
+      <a id="download-audio-link"
+         href="https://github.com/gregbny/svenska-flashcards/releases/download/v1.0-audio/media.zip"
+         download="media.zip"
+         class="btn-duo btn-green text-center">
+        1. Télécharger l'audio (167 MB)
+      </a>
 
-    <details class="w-full max-w-sm mt-4">
-      <summary class="text-xs text-duo-ink/50 text-center cursor-pointer">Déjà le zip en local ? Importer manuellement</summary>
-      <label class="btn-duo bg-duo-soft border border-duo-border w-full mt-3 cursor-pointer text-duo-ink/80">
+      <label class="btn-duo bg-duo-soft border border-duo-border cursor-pointer text-duo-ink">
         <input id="audio-zip-input" type="file" accept=".zip" class="hidden" />
-        Importer un .zip local
+        2. Sélectionner le zip téléchargé
       </label>
-    </details>
+
+      <p class="text-xs text-duo-ink/50 text-center leading-relaxed">
+        Après le téléchargement, ouvre <span class="font-bold">Fichiers</span> (iPhone) ou le dossier <span class="font-bold">Téléchargements</span> (PC/Android) et choisis <code class="bg-white px-1 rounded">media.zip</code>.
+      </p>
+    </div>
 
     <div id="import-progress" class="hidden w-full max-w-sm mt-6">
       <div class="flex justify-between text-xs text-duo-ink/60 mb-1">

@@ -13,13 +13,12 @@
 import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
 import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen } from './session.js';
-import { runImport, fetchAndImport } from './import.js';
+import { runImport } from './import.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
 import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sound.js';
 
 const DEFAULT_GOAL_DATE = '2026-07-20';
 const DAILY_TARGET = 25;
-const AUDIO_PACK_URL = 'https://github.com/gregbny/svenska-flashcards/releases/download/v1.0-audio/media.zip';
 
 async function getGoalDate() {
   const v = await getMeta('goalDate');
@@ -207,7 +206,6 @@ function showSetup() {
     if (state.importing) return;
     state.importing = true;
     document.getElementById('import-progress').classList.remove('hidden');
-    document.getElementById('download-audio-btn').disabled = true;
     try {
       await fn();
       showHome();
@@ -215,12 +213,7 @@ function showSetup() {
       alert('Erreur pendant l\'import : ' + err.message);
     } finally {
       state.importing = false;
-      document.getElementById('download-audio-btn').disabled = false;
     }
-  };
-
-  document.getElementById('download-audio-btn').onclick = () => {
-    runFlow(() => fetchAndImport(AUDIO_PACK_URL, updateProgress));
   };
 
   const input = document.getElementById('audio-zip-input');
