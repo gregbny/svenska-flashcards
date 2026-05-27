@@ -46,6 +46,20 @@ cd media && zip -r ../media.zip . && cd ..
 3. Lancer l'app depuis l'icône → écran de setup → sélectionner `media.zip`.
 4. Une fois l'import IndexedDB terminé, l'app est offline-first.
 
+## Sources & licences
+
+> ⚠️ **Usage strictement personnel / éducatif, non commercial.**
+
+Cette app empaquette plusieurs contenus tiers :
+
+- **Audio (167 MB sur GitHub Releases)** : prononciations Forvo.com, licence [CC-BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/). Non-commercial uniquement. Attribution dans les tags ID3 de chaque MP3.
+- **Vocabulaire (`cards.json`)** : deck Anki communautaire *"8000 most common Swedish words"* (origine Memrise), licence non explicite.
+- **Fréquence + niveaux CEFR** : [Swedish Kelly List](https://spraakbanken.gu.se/en/resources/kelly), Språkbanken / Université de Göteborg, [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **Phrases d'exemple + conjugaisons** : générées via Claude (Anthropic).
+- **Code applicatif** : [MIT](LICENSE).
+
+Voir [`CREDITS.md`](CREDITS.md) pour les attributions complètes et la procédure de retrait.
+
 ## Stack
 
 - Vanilla JS modules (pas de build)
