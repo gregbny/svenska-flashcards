@@ -163,6 +163,41 @@ section:not(.hidden) {
   100% { opacity: 0; transform: translateY(-44px) scale(1);   }
 }
 
+/* Toast "nouvelle version dispo" (injecté par app.js sur maj du SW) */
+.update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #3C3C3C;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.6rem 0.75rem 0.6rem 1rem;
+  border-radius: 9999px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  max-width: calc(100vw - 24px);
+  animation: toast-in 0.25s ease-out;
+}
+.update-toast button {
+  background: #58CC02;
+  color: white;
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  padding: 0.35rem 0.9rem;
+  flex-shrink: 0;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* Pulse de la barre de progression quotidienne quand on franchit l'objectif */
 .goal-reached {
   animation: goal-pulse 0.8s ease-out;

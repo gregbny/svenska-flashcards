@@ -39,6 +39,7 @@ function ensureState(s) {
     cardStates: {},
     dailyLog: {},
     streak: 0,
+    maxStreak: 0,
     lastSessionDate: null,
     freezes: 0,
     freezeEarnedAtStreak: 0,
@@ -320,6 +321,7 @@ function _updateStreak() {
     }
   }
 
+  _globalState.maxStreak = Math.max(_globalState.maxStreak ?? 0, _globalState.streak);
   _globalState.lastSessionDate = today;
 }
 
@@ -382,8 +384,19 @@ export function sessionStats() {
 
   const reviewsDue = Object.values(cs).filter((s) => isDue(s, now)).length;
 
+  // XP cumulée sur les 7 derniers jours (depuis xp.byDay)
+  const byDay = gs?.xp?.byDay ?? {};
+  let xpWeek = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    xpWeek += byDay[d.toISOString().slice(0, 10)] ?? 0;
+  }
+
   return {
     streak: gs?.streak ?? 0,
+    maxStreak: Math.max(gs?.maxStreak ?? 0, gs?.streak ?? 0),
+    xpWeek,
     doneToday: log.done,
     newAvailable: 0,       // computed lazily by startSession, left simple here
     reviewsDue,

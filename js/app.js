@@ -52,11 +52,31 @@ async function boot() {
 
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
+  // S'il y a déjà un contrôleur au boot, un futur changement = nouvelle
+  // version déployée → on propose un rechargement (et pas au 1er install).
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) showUpdateToast();
+  });
   try {
     await navigator.serviceWorker.register('./sw.js');
   } catch (e) {
     console.warn('SW registration failed', e);
   }
+}
+
+let _updateToastShown = false;
+function showUpdateToast() {
+  if (_updateToastShown) return;
+  _updateToastShown = true;
+  const el = document.createElement('div');
+  el.className = 'update-toast';
+  el.innerHTML = '<span>Nouvelle version disponible</span>';
+  const btn = document.createElement('button');
+  btn.textContent = 'Recharger';
+  btn.onclick = () => location.reload();
+  el.appendChild(btn);
+  document.body.appendChild(el);
 }
 
 async function loadCardsJson({ force = false } = {}) {
@@ -151,6 +171,16 @@ async function loadCardsJson({ force = false } = {}) {
  * un upsert massif au boot et l'app paraîtrait gelée le temps que
  * la transaction IDB se termine.
  */
+// Hash 32-bit rapide (FNV-1a) → signature compacte d'un contenu texte.
+function hashStr(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
 function scheduleBackgroundRefresh() {
   const run = async () => {
     try {
@@ -159,23 +189,26 @@ function scheduleBackgroundRefresh() {
         fetch('./travel.json').catch(() => null),
       ]);
       if (!deckRes || !deckRes.ok) return;
-      const deckRaw = await deckRes.json();
-      const travelRaw = (travelRes && travelRes.ok) ? await travelRes.json() : [];
-
-      const lastDeck = deckRaw[deckRaw.length - 1];
-      const sig = `v2:${deckRaw.length}:${deckRaw[0]?.id ?? ''}:${lastDeck?.id ?? ''}:${travelRaw.length}`;
+      // Hash du texte brut → détecte TOUTE modif de contenu (y compris un
+      // enrichissement qui ne change ni le nombre de cartes ni les ids).
+      const deckText = await deckRes.text();
+      const travelText = (travelRes && travelRes.ok) ? await travelRes.text() : '[]';
+      const sig = `v3:${hashStr(deckText)}:${hashStr(travelText)}`;
 
       const prev = await getMeta('cardsSig');
+      if (prev === sig) return; // contenu inchangé
+
       if (!prev) {
-        // Migration : on se contente d'enregistrer la signature actuelle.
-        // Les corrections futures déclencheront un vrai refresh.
+        // 1er passage (jamais de signature) : on enregistre sans tout
+        // réimporter — l'import initial a déjà chargé ce contenu.
         await setMeta('cardsSig', sig);
         return;
       }
-      if (prev === sig) return; // contenu inchangé
 
-      // Contenu modifié → on relance le chemin complet (forcé)
+      // Contenu modifié → refresh forcé, PUIS on persiste la nouvelle
+      // signature (sinon on re-refresherait à chaque boot).
       await loadCardsJson({ force: true });
+      await setMeta('cardsSig', sig);
     } catch (err) {
       console.warn('background card refresh failed', err);
     }
@@ -234,7 +267,6 @@ function showSetup() {
 async function showHome() {
   ui.show('home');
 
-  // TODO(Sonnet): lire les vraies valeurs depuis la session / localStorage
   const stats = sessionStats();
   const [counters, mastery] = await Promise.all([
     homeCounters({ maxNew: 10 }),
@@ -244,6 +276,8 @@ async function showHome() {
   document.getElementById('mastery-bar').style.width =
     `${Math.round((mastery.progress ?? 0) * 100)}%`;
   document.getElementById('streak-count').textContent = stats.streak ?? 0;
+  document.getElementById('best-streak').textContent = stats.maxStreak ?? 0;
+  document.getElementById('week-xp').textContent = stats.xpWeek ?? 0;
   const freezes = stats.freezes ?? 0;
   document.getElementById('freeze-badge').classList.toggle('hidden', freezes === 0);
   document.getElementById('freeze-count').textContent = freezes;

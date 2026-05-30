@@ -43,7 +43,18 @@ function tone(freq, startOffset, duration, { type = 'sine', gain = 0.18 } = {}) 
   osc.stop(t0 + duration + 0.05);
 }
 
+/**
+ * Retour haptique. Indépendant du mute (mute = son, pas vibration).
+ * No-op silencieux là où non supporté (ex: Safari iOS).
+ */
+function vibrate(pattern) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(pattern); } catch { /* ignore */ }
+  }
+}
+
 export function playCorrect() {
+  vibrate(15); // petit "tick"
   if (_muted) return;
   // Petit "ding" ascendant : E5 → A5
   tone(659.25, 0, 0.12);
@@ -51,6 +62,7 @@ export function playCorrect() {
 }
 
 export function playWrong() {
+  vibrate([35, 40, 35]); // double buzz
   if (_muted) return;
   // Buzz grave descendant
   tone(220, 0, 0.18, { type: 'sawtooth', gain: 0.1 });
@@ -58,6 +70,7 @@ export function playWrong() {
 }
 
 export function playComplete() {
+  vibrate([20, 40, 20, 40, 50]); // petite fanfare
   if (_muted) return;
   // Triomphe : C5 → E5 → G5
   tone(523.25, 0, 0.15);
