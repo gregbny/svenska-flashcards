@@ -368,7 +368,10 @@ export function warmupCards(k = 5, min = 4) {
  * alimente les mêmes compteurs que l'XP de révision.
  */
 export function awardBonusXP(amount) {
-  if (!_globalState || !amount) return 0;
+  if (!amount) return 0;
+  // Peut être appelé hors session d'étude (ex: session Lecture depuis la
+  // home) → on charge l'état persisté si besoin pour ne pas perdre l'XP.
+  if (!_globalState) _globalState = ensureState(loadState());
   const today = todayStr();
   _globalState.xp.total = (_globalState.xp.total ?? 0) + amount;
   _globalState.xp.byDay[today] = (_globalState.xp.byDay[today] ?? 0) + amount;

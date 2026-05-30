@@ -1,0 +1,562 @@
+[
+  {
+    "id": "r01",
+    "level": "A1",
+    "title_sv": "Jag anländer",
+    "title_fr": "J'arrive",
+    "text_sv": "Hej! Jag är på flygplatsen i Stockholm. Min familj väntar på mig. Jag är glad. Vi åker hem tillsammans i bilen. Det är vår och landskapet är grönt. Jag tycker om Sverige.",
+    "text_fr": "Salut ! Je suis à l'aéroport de Stockholm. Ma famille m'attend. Je suis heureux. Nous rentrons à la maison ensemble en voiture. C'est le printemps et le paysage est vert. J'aime la Suède.",
+    "questions": [
+      {
+        "q_sv": "Var är jag?",
+        "q_fr": "Où suis-je ?",
+        "options": ["På flygplatsen", "På tåget", "I hemmet"],
+        "correct": 0
+      },
+      {
+        "q_sv": "Vem väntar på mig?",
+        "q_fr": "Qui m'attend ?",
+        "options": ["Min familj", "Mina vänner", "Min chef"],
+        "correct": 0
+      },
+      {
+        "q_sv": "Vilken årstid är det?",
+        "q_fr": "Quelle est la saison ?",
+        "options": ["Sommar", "Höst", "Vår"],
+        "correct": 2
+      }
+    ]
+  },
+  {
+    "id": "r02",
+    "level": "A1",
+    "title_sv": "Fika hos farmor",
+    "title_fr": "Le café chez grand-mère",
+    "text_sv": "Jag är hos farmor. Vi dricker kaffe och äter bullar. Bullarna är goda. Farmor berättar om sitt arbete. Jag lyssnar. Vi skrattar mycket. Farmor älskar mig.",
+    "text_fr": "Je suis chez grand-mère. Nous buvons du café et mangeons des brioches. Les brioches sont délicieuses. Grand-mère parle de son travail. J'écoute. Nous rions beaucoup. Grand-mère m'aime.",
+    "questions": [
+      {
+        "q_sv": "Vad äter vi?",
+        "q_fr": "Qu'est-ce que nous mangeons ?",
+        "options": ["Kakor", "Bullar", "Bröd"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad gör jag?",
+        "q_fr": "Qu'est-ce que je fais ?",
+        "options": ["Jag sover", "Jag läser", "Jag lyssnar"],
+        "correct": 2
+      },
+      {
+        "q_sv": "Älskar farmor mig?",
+        "q_fr": "Grand-mère m'aime-t-elle ?",
+        "options": ["Ja", "Nej", "Kanske"],
+        "correct": 0
+      }
+    ]
+  },
+  {
+    "id": "r03",
+    "level": "A1",
+    "title_sv": "Dagen börjar",
+    "title_fr": "La journée commence",
+    "text_sv": "Det är åtta på morgonen. Jag vaknar. Jag duschar och klär mig. Jag äter frukost. Det är mjölk, fil och flingor. Min faster gör pannkakor. Vi äter alla pannkakor tillsammans.",
+    "text_fr": "Il est huit heures du matin. Je me réveille. Je prends une douche et m'habille. Je prends le petit-déjeuner. C'est du lait, du fil (lait fermenté) et des céréales. Ma tante fait des crêpes. Nous les mangeons tous ensemble.",
+    "questions": [
+      {
+        "q_sv": "Vilken tid är det?",
+        "q_fr": "Quelle heure est-il ?",
+        "options": ["Sju på morgonen", "Åtta på morgonen", "Nio på morgonen"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad gör jag efter att jag vaknar?",
+        "q_fr": "Que fais-je après m'être réveillé ?",
+        "options": ["Jag äter", "Jag duschar", "Jag sover"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vem gör pannkakor?",
+        "q_fr": "Qui fait les crêpes ?",
+        "options": ["Min faster", "Min farmor", "Min mamma"],
+        "correct": 0
+      }
+    ]
+  },
+  {
+    "id": "r04",
+    "level": "A1",
+    "title_sv": "Vädret",
+    "title_fr": "Le temps",
+    "text_sv": "Idag är det soligt. Solen skiner på himlen. Det är varmt och fint väder. Vi går ut i trädgården. Vi ser många blommor. Blommorna är röda och gula. Det luktar bra.",
+    "text_fr": "Aujourd'hui, il fait soleil. Le soleil brille dans le ciel. Il fait chaud et le temps est beau. Nous sortons dans le jardin. Nous voyons beaucoup de fleurs. Les fleurs sont rouges et jaunes. Ça sent bon.",
+    "questions": [
+      {
+        "q_sv": "Hur är vädret?",
+        "q_fr": "Quel temps fait-il ?",
+        "options": ["Regn", "Soligt", "Molnigt"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Var går vi?",
+        "q_fr": "Où allons-nous ?",
+        "options": ["I skolan", "I trädgården", "I butiken"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vilken färg har blommorna?",
+        "q_fr": "De quelle couleur sont les fleurs ?",
+        "options": ["Gröna", "Röda och gula", "Vita"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r05",
+    "level": "A1",
+    "title_sv": "Mat på bordet",
+    "title_fr": "À manger à table",
+    "text_sv": "Vi äter middag. Det är köttbullar med potatis och gräddsås. Jag äter mycket. Det smakar gott. Alla njuter av maten. Då och då dricker vi vatten. Vi talar om dagen.",
+    "text_fr": "Nous dînons. C'est des boulettes de viande avec des pommes de terre et de la sauce à la crème. Je mange beaucoup. C'est bon. Tout le monde apprécie le repas. De temps en temps, nous buvons de l'eau. Nous parlons de la journée.",
+    "questions": [
+      {
+        "q_sv": "Vad äter vi?",
+        "q_fr": "Qu'est-ce que nous mangeons ?",
+        "options": ["Fisk", "Köttbullar", "Kyckling"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad dricker vi?",
+        "q_fr": "Qu'est-ce que nous buvons ?",
+        "options": ["Juice", "Vatten", "Mjölk"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Smakar maten gott?",
+        "q_fr": "Le repas est-il bon ?",
+        "options": ["Nej", "Inte alls", "Ja"],
+        "correct": 2
+      }
+    ]
+  },
+  {
+    "id": "r06",
+    "level": "A1",
+    "title_sv": "I mataffären",
+    "title_fr": "Au supermarché",
+    "text_sv": "Vi är i mataffären. Vi köper äpplen, banan och mjölk. Äpplena är röda. Bananen är gul. Vi köper också bröd och smör. Det finns många människor i affären.",
+    "text_fr": "Nous sommes au supermarché. Nous achetons des pommes, une banane et du lait. Les pommes sont rouges. La banane est jaune. Nous achetons aussi du pain et du beurre. Il y a beaucoup de gens dans le magasin.",
+    "questions": [
+      {
+        "q_sv": "Var är vi?",
+        "q_fr": "Où sommes-nous ?",
+        "options": ["I hemmet", "I mataffären", "I kyrkan"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vilken färg har äpplena?",
+        "q_fr": "De quelle couleur sont les pommes ?",
+        "options": ["Gula", "Gröna", "Röda"],
+        "correct": 2
+      },
+      {
+        "q_sv": "Köper vi smör?",
+        "q_fr": "Achetons-nous du beurre ?",
+        "options": ["Nej", "Ja", "Bara lite"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r07",
+    "level": "A1",
+    "title_sv": "Hemmet",
+    "title_fr": "La maison",
+    "text_sv": "Huset är rött och vitt. Det har många fönster. I huset finns en stor sal, ett kök och tre sovrum. Trädgården är stor och grön. Vi älskar vårt hus. Det är fint och varmt.",
+    "text_fr": "La maison est rouge et blanche. Elle a beaucoup de fenêtres. Dans la maison, il y a un grand salon, une cuisine et trois chambres. Le jardin est grand et vert. Nous aimons notre maison. Elle est belle et chaleureuse.",
+    "questions": [
+      {
+        "q_sv": "Vilken färg har huset?",
+        "q_fr": "De quelle couleur est la maison ?",
+        "options": ["Rött och vitt", "Blått och vitt", "Gult och grått"],
+        "correct": 0
+      },
+      {
+        "q_sv": "Hur många sovrum finns det?",
+        "q_fr": "Combien de chambres y a-t-il ?",
+        "options": ["Tre", "Två", "Fyra"],
+        "correct": 0
+      },
+      {
+        "q_sv": "Är trädgården stor?",
+        "q_fr": "Le jardin est-il grand ?",
+        "options": ["Nej", "Ja", "Liten"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r08",
+    "level": "A1",
+    "title_sv": "En promenad",
+    "title_fr": "Une promenade",
+    "text_sv": "Vi går en promenad i skogen. Det är lugnt och fridfullt. Vi ser träd, blommor och fåglar. Mina farföräldrar talar långsamt. Jag förstår dem. Vi är lyckliga tillsammans.",
+    "text_fr": "Nous faisons une promenade dans la forêt. C'est calme et paisible. Nous voyons des arbres, des fleurs et des oiseaux. Mes grands-parents parlent lentement. Je les comprends. Nous sommes heureux ensemble.",
+    "questions": [
+      {
+        "q_sv": "Var går vi?",
+        "q_fr": "Où allons-nous ?",
+        "options": ["I skogen", "I byn", "Vid stranden"],
+        "correct": 0
+      },
+      {
+        "q_sv": "Vad ser vi?",
+        "q_fr": "Qu'est-ce que nous voyons ?",
+        "options": ["Bara träd", "Träd, blommor och fåglar", "Bara gräs"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Förstår jag mina farföräldrar?",
+        "q_fr": "Est-ce que je comprends mes grands-parents ?",
+        "options": ["Nej", "Ja", "Inte alltid"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r09",
+    "level": "A2",
+    "title_sv": "En tågresa",
+    "title_fr": "Un voyage en train",
+    "text_sv": "Jag tog tåget från Stockholm till Uppsala förra veckan. Tåget var snabbt och bekvämt. Jag satte mig vid fönstret och såg på landskapet. Det var vackert med fält och skog. En dam satt bredvid mig och vi pratade om Sverige. Resan tog en timme. Jag njöt av varje minut.",
+    "text_fr": "J'ai pris le train de Stockholm à Uppsala la semaine dernière. Le train était rapide et confortable. Je me suis assis près de la fenêtre et j'ai regardé le paysage. C'était beau, avec des champs et de la forêt. Une dame s'est assise à côté de moi et nous avons parlé de la Suède. Le voyage a duré une heure. J'ai apprécié chaque minute.",
+    "questions": [
+      {
+        "q_sv": "Vart tog jag tåget?",
+        "q_fr": "Où ai-je pris le train ?",
+        "options": ["Till Göteborg", "Till Uppsala", "Till Malmö"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad såg jag från tåget?",
+        "q_fr": "Qu'est-ce que j'ai vu depuis le train ?",
+        "options": ["Bara städer", "Fält och skog", "Bara vatten"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Hur lång var resan?",
+        "q_fr": "Combien de temps a duré le voyage ?",
+        "options": ["En halv timme", "En timme", "Två timmar"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r10",
+    "level": "A2",
+    "title_sv": "Midsommar",
+    "title_fr": "La Saint-Jean (Midsommar)",
+    "text_sv": "Förra året firade vi midsommar på landet. Vi band blomsterkransar och dansade runt majstången. Det var roligt och festligt. Min kusin spelade gitarr. Vi åt jordgubbar och drack saft. Solen gick inte ner. Det var en magisk natt.",
+    "text_fr": "L'année dernière, nous avons fêté la Saint-Jean à la campagne. Nous avons tressé des couronnes de fleurs et dansé autour du mât de mai. C'était amusant et festif. Mon cousin jouait de la guitare. Nous avons mangé des fraises et bu du sirop. Le soleil ne s'est pas couché. C'était une nuit magique.",
+    "questions": [
+      {
+        "q_sv": "Vad firade vi?",
+        "q_fr": "Qu'est-ce que nous avons fêté ?",
+        "options": ["Påsk", "Midsommar", "Jul"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad åt vi?",
+        "q_fr": "Qu'est-ce que nous avons mangé ?",
+        "options": ["Äpplen", "Jordgubbar", "Körsbär"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad gjorde min kusin?",
+        "q_fr": "Qu'est-ce que mon cousin a fait ?",
+        "options": ["Han dansade", "Han spelade gitarr", "Han sjöng"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r11",
+    "level": "A2",
+    "title_sv": "Sommarstugan",
+    "title_fr": "Le chalet d'été",
+    "text_sv": "Vi tillbringade två veckor på sommarstugan vid sjön. Huset var litet men mysigt. Varje dag simmade vi och fiskade. En dag såg vi en älg vid vattnet. Vi tog många fotografier. På kvällen gjorde vi upp en eld och grillade korv. Det var vår bästa sommar.",
+    "text_fr": "Nous avons passé deux semaines au chalet d'été près du lac. La maison était petite mais douillette. Chaque jour, nous nagions et pêchions. Un jour, nous avons vu un élan près de l'eau. Nous avons pris beaucoup de photos. Le soir, nous avons fait un feu et grillé des saucisses. C'était notre meilleur été.",
+    "questions": [
+      {
+        "q_sv": "Hur länge var vi på sommarstugan?",
+        "q_fr": "Combien de temps sommes-nous restés au chalet ?",
+        "options": ["En vecka", "Två veckor", "En månad"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad såg vi vid vattnet?",
+        "q_fr": "Qu'est-ce que nous avons vu près de l'eau ?",
+        "options": ["En hjort", "En älg", "En björn"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad gjorde vi på kvällen?",
+        "q_fr": "Qu'est-ce que nous avons fait le soir ?",
+        "options": ["Vi gjorde upp en eld och grillade korv", "Vi läste", "Vi såg på TV"],
+        "correct": 0
+      }
+    ]
+  },
+  {
+    "id": "r12",
+    "level": "A2",
+    "title_sv": "Farbrors födelsedag",
+    "title_fr": "L'anniversaire de l'oncle",
+    "text_sv": "Förra helgen ordnade vi en fest för min farbror. Han fyllde femtio år. Vi bakade en stor tårta med choklad och frukt. Min farmor gjorde sina klassiska köttbullar. Vi sjöng för honom och gav honom presenter. Han blev mycket glad. Vi dansade och skrattade länge.",
+    "text_fr": "Le week-end dernier, nous avons organisé une fête pour mon oncle. Il a eu cinquante ans. Nous avons fait un grand gâteau au chocolat et aux fruits. Ma grand-mère a préparé ses boulettes de viande classiques. Nous avons chanté pour lui et lui avons offert des cadeaux. Il a été très heureux. Nous avons dansé et ri longtemps.",
+    "questions": [
+      {
+        "q_sv": "Hur många år fyllde farbror?",
+        "q_fr": "Quel âge a eu l'oncle ?",
+        "options": ["Fyrtio", "Femtio", "Sextio"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad bakade vi?",
+        "q_fr": "Qu'est-ce que nous avons préparé ?",
+        "options": ["En paj", "En tårta", "Kakor"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Blev farbror glad?",
+        "q_fr": "L'oncle a-t-il été heureux ?",
+        "options": ["Nej", "Mycket glad", "Lite glad"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r13",
+    "level": "A1",
+    "title_sv": "Svenska ord",
+    "title_fr": "Des mots suédois",
+    "text_sv": "Jag lär mig svenska. Jag läser och skriver varje dag. Min familj hjälper mig. De rättar mig när jag talar. Det är svårt men jag älskar det. Jag blir bättre varje dag. Snart kan jag förstå allt.",
+    "text_fr": "J'apprends le suédois. Je lis et écris chaque jour. Ma famille m'aide. Ils me corrigent quand je parle. C'est difficile mais j'adore ça. Je m'améliore chaque jour. Bientôt, je pourrai tout comprendre.",
+    "questions": [
+      {
+        "q_sv": "Vad lär jag mig?",
+        "q_fr": "Qu'est-ce que j'apprends ?",
+        "options": ["Engelska", "Svenska", "Franska"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vem hjälper mig?",
+        "q_fr": "Qui m'aide ?",
+        "options": ["En lärare", "Min familj", "Mina vänner"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Blir jag bättre?",
+        "q_fr": "Est-ce que je m'améliore ?",
+        "options": ["Nej", "Ja", "Kanske"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r14",
+    "level": "A2",
+    "title_sv": "En snöig dag",
+    "title_fr": "Un jour de neige",
+    "text_sv": "Det var vinterväder igår. Det snöade hela dagen. Allt var vitt. Min kusin och jag byggde en snögubbe. Vi gjorde honom stor och rolig. Min bror kastade snöbollar på oss. Vi skrattade och lekte. Sedan gick vi in och drack varm choklad med marshmallows.",
+    "text_fr": "Il faisait un temps d'hiver hier. Il a neigé toute la journée. Tout était blanc. Mon cousin et moi avons construit un bonhomme de neige. Nous l'avons fait grand et drôle. Mon frère nous a lancé des boules de neige. Nous avons ri et joué. Puis nous sommes rentrés et avons bu du chocolat chaud avec des marshmallows.",
+    "questions": [
+      {
+        "q_sv": "Hur var vädret igår?",
+        "q_fr": "Quel temps faisait-il hier ?",
+        "options": ["Soligt", "Regn", "Snöväder"],
+        "correct": 2
+      },
+      {
+        "q_sv": "Vad byggde vi?",
+        "q_fr": "Qu'est-ce que nous avons construit ?",
+        "options": ["En borg", "En snögubbe", "En väg"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad drack vi?",
+        "q_fr": "Qu'est-ce que nous avons bu ?",
+        "options": ["Te", "Kaffe", "Varm choklad"],
+        "correct": 2
+      }
+    ]
+  },
+  {
+    "id": "r15",
+    "level": "A2",
+    "title_sv": "Byn",
+    "title_fr": "Le village",
+    "text_sv": "Min familj bor i en liten by. Det finns bara hundra människor där. Alla känner varandra. Det finns en liten affär, en kyrka och en skola. Vi trivs där. Livet är lugnt och enkelt. Vi möter grannar nästan varje dag.",
+    "text_fr": "Ma famille habite dans un petit village. Il n'y a que cent personnes là-bas. Tout le monde se connaît. Il y a un petit magasin, une église et une école. Nous nous y plaisons. La vie est calme et simple. Nous rencontrons des voisins presque chaque jour.",
+    "questions": [
+      {
+        "q_sv": "Hur många människor bor i byn?",
+        "q_fr": "Combien de personnes habitent dans le village ?",
+        "options": ["Femtio", "Hundra", "Tvåhundra"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad finns i byn?",
+        "q_fr": "Qu'est-ce qu'il y a dans le village ?",
+        "options": ["En affär och en kyrka", "En kyrka och en skola", "En affär, en kyrka och en skola"],
+        "correct": 2
+      },
+      {
+        "q_sv": "Hur är livet i byn?",
+        "q_fr": "Comment est la vie dans le village ?",
+        "options": ["Stressigt", "Lugnt och enkelt", "Trist"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r16",
+    "level": "A1",
+    "title_sv": "Familjen",
+    "title_fr": "La famille",
+    "text_sv": "Min familj är stor. Jag har två föräldrar, två bröder och en syster. Vi älskar varandra mycket. Vi äter frukost tillsammans varje morgon. Vi spelar spel på kvällen. Familjen är min största skatt.",
+    "text_fr": "Ma famille est grande. J'ai deux parents, deux frères et une sœur. Nous nous aimons beaucoup. Nous prenons le petit-déjeuner ensemble chaque matin. Nous jouons à des jeux le soir. La famille est mon plus grand trésor.",
+    "questions": [
+      {
+        "q_sv": "Hur många bröder har jag?",
+        "q_fr": "Combien de frères ai-je ?",
+        "options": ["En", "Två", "Tre"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad gör vi på kvällen?",
+        "q_fr": "Qu'est-ce que nous faisons le soir ?",
+        "options": ["Vi ser på TV", "Vi spelar spel", "Vi läser"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Älskar vi varandra?",
+        "q_fr": "Est-ce que nous nous aimons ?",
+        "options": ["Nej", "Ja", "Lite"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r17",
+    "level": "A2",
+    "title_sv": "Vid havet",
+    "title_fr": "Au bord de la mer",
+    "text_sv": "Vi åkte till kusten förra sommaren. Stranden var vacker och sanden var varm. Jag simmade i havet med min farfar. Vattnet var kallt men friskt. Vi hittade många snäckor och stenar. På kvällen såg vi solnedgången. Det var alldeles underbart.",
+    "text_fr": "Nous sommes allés à la côte l'été dernier. La plage était belle et le sable était chaud. J'ai nagé dans la mer avec mon grand-père. L'eau était froide mais rafraîchissante. Nous avons trouvé beaucoup de coquillages et de pierres. Le soir, nous avons regardé le coucher de soleil. C'était absolument magnifique.",
+    "questions": [
+      {
+        "q_sv": "Vart åkte vi?",
+        "q_fr": "Où sommes-nous allés ?",
+        "options": ["Till skogen", "Till kusten", "Till bergen"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Med vem simmade jag?",
+        "q_fr": "Avec qui ai-je nagé ?",
+        "options": ["Min mamma", "Min farfar", "Min faster"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad såg vi på kvällen?",
+        "q_fr": "Qu'avons-nous vu le soir ?",
+        "options": ["Solnedgången", "Månen", "Stjärnorna"],
+        "correct": 0
+      }
+    ]
+  },
+  {
+    "id": "r18",
+    "level": "A2",
+    "title_sv": "En besökare från Sverige",
+    "title_fr": "Un visiteur de Suède",
+    "text_sv": "Min morbror kom och besökte oss i Frankrike förra månaden. Det var hans första gång i mitt land. Jag visade honom Paris och museerna. Han tyckte mycket om fransk mat och vin. Vi åt på många restauranger tillsammans. Han sa att Sverige är fint men att Frankrike också är vackert. Vi hade en underbar tid tillsammans.",
+    "text_fr": "Mon oncle maternel est venu nous rendre visite en France le mois dernier. C'était sa première fois dans mon pays. Je lui ai montré Paris et les musées. Il a beaucoup aimé la cuisine française et le vin. Nous avons mangé dans beaucoup de restaurants ensemble. Il a dit que la Suède est belle mais que la France l'est aussi. Nous avons passé un moment merveilleux ensemble.",
+    "questions": [
+      {
+        "q_sv": "Vem besökte oss?",
+        "q_fr": "Qui nous a rendu visite ?",
+        "options": ["Min farbror", "Min morbror", "Min faster"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vilken stad visade jag honom?",
+        "q_fr": "Quelle ville lui ai-je montrée ?",
+        "options": ["London", "Paris", "Rom"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Tyckte morbror om fransk mat?",
+        "q_fr": "L'oncle a-t-il aimé la cuisine française ?",
+        "options": ["Lite", "Nej", "Ja, mycket"],
+        "correct": 2
+      }
+    ]
+  },
+  {
+    "id": "r19",
+    "level": "A1",
+    "title_sv": "En dag i skolan",
+    "title_fr": "Une journée à l'école",
+    "text_sv": "Idag gick jag till skolan. Vi hade svenska, matematik och engelska. Jag älskar svensklektionen. Läraren är snäll och rolig. Vi läste en berättelse. Vi skrev också nya ord. Efter skolan åt jag en smörgås hemma.",
+    "text_fr": "Aujourd'hui, je suis allé à l'école. Nous avions suédois, mathématiques et anglais. J'adore le cours de suédois. Le professeur est gentil et drôle. Nous avons lu une histoire. Nous avons aussi écrit de nouveaux mots. Après l'école, j'ai mangé un sandwich à la maison.",
+    "questions": [
+      {
+        "q_sv": "Vilka ämnen hade vi i skolan?",
+        "q_fr": "Quelles matières avions-nous à l'école ?",
+        "options": ["Bara matematik", "Svenska, matematik och engelska", "Bara engelska"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vilken lektion älskar jag?",
+        "q_fr": "Quel cours est-ce que j'adore ?",
+        "options": ["Svenska", "Matematik", "Engelska"],
+        "correct": 0
+      },
+      {
+        "q_sv": "Vad åt jag efter skolan?",
+        "q_fr": "Qu'ai-je mangé après l'école ?",
+        "options": ["En frukt", "En smörgås", "Frukost"],
+        "correct": 1
+      }
+    ]
+  },
+  {
+    "id": "r20",
+    "level": "A2",
+    "title_sv": "Våren är här",
+    "title_fr": "Le printemps est arrivé",
+    "text_sv": "Vintern är över och våren kommer. Snön smälter och gräset blir grönt. Blommorna börjar växa. Fåglarna sjunger sina sånger. Det regnar ibland men vädret blir varmare. Min farfar planterade nya blommor i trädgården. Vi hjälpte honom. Vi är alla glada över att våren är här.",
+    "text_fr": "L'hiver est terminé et le printemps arrive. La neige fond et l'herbe devient verte. Les fleurs commencent à pousser. Les oiseaux chantent leurs chansons. Il pleut parfois mais le temps devient plus chaud. Mon grand-père a planté de nouvelles fleurs dans le jardin. Nous l'avons aidé. Nous sommes tous heureux que le printemps soit arrivé.",
+    "questions": [
+      {
+        "q_sv": "Vilken årstid kommer?",
+        "q_fr": "Quelle saison arrive ?",
+        "options": ["Sommar", "Vår", "Höst"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad gör snön?",
+        "q_fr": "Que fait la neige ?",
+        "options": ["Den växer", "Den smälter", "Den blir vit"],
+        "correct": 1
+      },
+      {
+        "q_sv": "Vad planterade min farfar?",
+        "q_fr": "Qu'a planté mon grand-père ?",
+        "options": ["Träd", "Nya blommor", "Grönsaker"],
+        "correct": 1
+      }
+    ]
+  }
+]

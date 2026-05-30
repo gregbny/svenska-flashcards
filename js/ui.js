@@ -1,6 +1,6 @@
 /** Tiny screen switcher. */
 
-const SCREENS = ['loading', 'setup', 'home', 'study', 'match', 'done', 'account'];
+const SCREENS = ['loading', 'setup', 'home', 'study', 'match', 'done', 'account', 'reading', 'reader'];
 
 export const ui = {
   show(name) {

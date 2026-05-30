@@ -4,7 +4,7 @@
  * L'audio n'est PAS dans le cache SW — il est stocké en IndexedDB après import manuel.
  */
 
-const VERSION = 'svenska-v17';
+const VERSION = 'svenska-v18';
 const SHELL = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const SHELL = [
   './manifest.json',
   './cards.json',
   './travel.json',
+  './reading.json',
   './js/app.js',
   './js/db.js',
   './js/sm2.js',
@@ -61,7 +62,7 @@ self.addEventListener('fetch', (event) => {
   // cards.json + travel.json: stale-while-revalidate
   // → sert immédiatement la version cache (boot rapide), met à jour
   //   le cache en arrière-plan pour le prochain démarrage.
-  if (url.pathname.endsWith('/cards.json') || url.pathname.endsWith('/travel.json')) {
+  if (url.pathname.endsWith('/cards.json') || url.pathname.endsWith('/travel.json') || url.pathname.endsWith('/reading.json')) {
     event.respondWith(
       caches.match(request).then((cached) => {
         const fetchAndCache = fetch(request)

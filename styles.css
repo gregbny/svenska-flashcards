@@ -141,6 +141,37 @@ section:not(.hidden) {
   visibility: hidden;
 }
 
+/* Items de la liste de lecture */
+.reading-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 2px solid #E5E5E5;
+  border-bottom-width: 4px;
+  border-radius: 1rem;
+  padding: 0.7rem 1rem;
+  transition: transform 0.05s ease;
+}
+.reading-item:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+.reading-level {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #1899D6;
+  background: rgba(28, 176, 246, 0.12);
+  border-radius: 9999px;
+  padding: 1px 7px;
+}
+.reading-title { font-weight: 800; font-size: 1.05rem; color: #3C3C3C; }
+.reading-title-fr { font-size: 0.8rem; color: rgba(60, 60, 60, 0.5); font-style: italic; }
+
 /* Trou à compléter (mode cloze) */
 .cloze-blank {
   color: #1CB0F6;

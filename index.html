@@ -184,6 +184,43 @@
     <button id="start-session-btn" class="btn-duo btn-green w-full mt-auto">
       Commencer la session
     </button>
+    <button id="reading-btn" class="btn-duo btn-blue w-full mt-2">
+      📖 Lecture
+    </button>
+  </section>
+
+  <!-- ============================================================
+       SCREEN: READING (liste des textes de lecture)
+       ============================================================ -->
+  <section id="screen-reading" class="hidden flex-col px-5 py-5 overflow-y-auto">
+    <header class="flex items-center justify-between mb-4">
+      <button id="reading-back-btn" class="text-duo-ink/40 text-3xl leading-none w-8 h-8 flex items-center justify-center">‹</button>
+      <span class="font-extrabold text-lg">📖 Lecture</span>
+      <div class="w-8"></div>
+    </header>
+    <p class="text-sm text-duo-ink/55 mb-4">Lis un court texte en suédois, puis réponds aux questions.</p>
+    <div id="reading-list" class="flex flex-col gap-2.5"></div>
+  </section>
+
+  <!-- ============================================================
+       SCREEN: READER (un texte + ses questions)
+       ============================================================ -->
+  <section id="screen-reader" class="hidden flex-col px-5 py-5 overflow-y-auto">
+    <header class="flex items-center justify-between mb-3">
+      <button id="reader-back-btn" class="text-duo-ink/40 text-3xl leading-none w-8 h-8 flex items-center justify-center">‹</button>
+      <span id="reader-level" class="text-[10px] font-extrabold px-2 py-1 rounded-full bg-duo-blue/10 text-duo-blue">A1</span>
+      <div class="w-8"></div>
+    </header>
+    <h2 id="reader-title" class="text-2xl font-extrabold mb-1">—</h2>
+    <div id="reader-title-fr" class="text-sm text-duo-ink/50 italic mb-4">—</div>
+    <div id="reader-text" class="text-lg leading-relaxed mb-3 whitespace-pre-line">—</div>
+    <button id="reader-translate-btn" class="self-start text-sm font-bold text-duo-blue mb-2">🇫🇷 Traduction</button>
+    <div id="reader-text-fr" class="hidden text-base leading-relaxed text-duo-ink/60 italic bg-duo-soft border border-duo-border rounded-xl p-3 mb-4"></div>
+    <div class="border-t border-duo-border my-3"></div>
+    <div class="text-xs text-duo-ink/50 uppercase tracking-widest mb-3">Frågor · Questions</div>
+    <div id="reader-questions" class="flex flex-col gap-5"></div>
+    <div id="reader-result" class="hidden mt-5 text-center bg-duo-soft border border-duo-border rounded-2xl p-4"></div>
+    <button id="reader-done-btn" class="btn-duo btn-green w-full mt-5 hidden">Terminer</button>
   </section>
 
   <!-- ============================================================

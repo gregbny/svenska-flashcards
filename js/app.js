@@ -301,6 +301,8 @@ async function showHome() {
     unlockAudio(); // doit être dans le user gesture, sync
     beginStudy();
   };
+
+  document.getElementById('reading-btn').onclick = () => showReading();
 }
 
 function renderInstallHint() {
@@ -870,6 +872,134 @@ function finishSession() {
   playComplete();
 
   document.getElementById('back-home-btn').onclick = showHome;
+}
+
+// ───────────────────────── Reading (session Lecture) ─────────────────────────
+let _readingTexts = null;
+
+async function loadReading() {
+  if (_readingTexts) return _readingTexts;
+  try {
+    const res = await fetch('./reading.json');
+    _readingTexts = res.ok ? await res.json() : [];
+  } catch {
+    _readingTexts = [];
+  }
+  return _readingTexts;
+}
+
+async function showReading() {
+  const texts = await loadReading();
+  const list = document.getElementById('reading-list');
+  list.innerHTML = '';
+
+  if (!texts.length) {
+    const empty = document.createElement('div');
+    empty.className = 'text-sm text-duo-ink/50 text-center py-8';
+    empty.textContent = 'Aucun texte disponible pour le moment.';
+    list.appendChild(empty);
+  }
+
+  texts.forEach((t) => {
+    const btn = document.createElement('button');
+    btn.className = 'reading-item';
+    const lvl = document.createElement('span');
+    lvl.className = 'reading-level';
+    lvl.textContent = t.level;
+    const title = document.createElement('span');
+    title.className = 'reading-title';
+    title.textContent = t.title_sv;
+    const titleFr = document.createElement('span');
+    titleFr.className = 'reading-title-fr';
+    titleFr.textContent = t.title_fr;
+    btn.append(lvl, title, titleFr);
+    btn.onclick = () => openReader(t);
+    list.appendChild(btn);
+  });
+
+  document.getElementById('reading-back-btn').onclick = showHome;
+  ui.show('reading');
+}
+
+function openReader(t) {
+  document.getElementById('reader-level').textContent = t.level;
+  document.getElementById('reader-title').textContent = t.title_sv;
+  document.getElementById('reader-title-fr').textContent = t.title_fr;
+  document.getElementById('reader-text').textContent = t.text_sv;
+
+  const fr = document.getElementById('reader-text-fr');
+  fr.textContent = t.text_fr;
+  fr.classList.add('hidden');
+  document.getElementById('reader-translate-btn').onclick = () => fr.classList.toggle('hidden');
+
+  const result = document.getElementById('reader-result');
+  result.classList.add('hidden');
+  result.innerHTML = '';
+  const doneBtn = document.getElementById('reader-done-btn');
+  doneBtn.classList.add('hidden');
+  doneBtn.onclick = showReading;
+
+  const qhost = document.getElementById('reader-questions');
+  qhost.innerHTML = '';
+
+  const total = t.questions.length;
+  let answered = 0;
+  let correct = 0;
+
+  t.questions.forEach((q) => {
+    const block = document.createElement('div');
+    const qs = document.createElement('div');
+    qs.className = 'font-bold mb-0.5';
+    qs.textContent = q.q_sv;
+    const qf = document.createElement('div');
+    qf.className = 'text-xs text-duo-ink/50 italic mb-2';
+    qf.textContent = q.q_fr;
+    const opts = document.createElement('div');
+    opts.className = 'grid grid-cols-1 gap-2';
+
+    // Options mélangées à l'affichage → aucun biais de position.
+    const correctText = q.options[q.correct];
+    const shuffled = shuffleArr(q.options.map((text) => ({ text, ok: text === correctText })));
+    let locked = false;
+    shuffled.forEach((item) => {
+      const b = document.createElement('button');
+      b.className = 'opt-btn';
+      b.textContent = item.text;
+      b.onclick = () => {
+        if (locked) return;
+        locked = true;
+        opts.querySelectorAll('.opt-btn').forEach((bb) => {
+          bb.disabled = true;
+          if (bb.textContent === correctText) bb.classList.add('opt-correct');
+          else if (bb === b) bb.classList.add('opt-wrong');
+          else bb.classList.add('opt-faded');
+        });
+        if (item.ok) { playCorrect(); correct += 1; } else playWrong();
+        answered += 1;
+        if (answered === total) {
+          const gained = awardBonusXP(correct * 5);
+          playComplete();
+          const h = document.createElement('div');
+          h.className = 'text-2xl font-extrabold mb-1';
+          h.textContent = `${correct}/${total} ✓`;
+          const x = document.createElement('div');
+          x.className = 'text-duo-blue font-bold';
+          x.textContent = `+${gained} XP`;
+          result.append(h, x);
+          result.classList.remove('hidden');
+          doneBtn.classList.remove('hidden');
+        }
+      };
+      opts.appendChild(b);
+    });
+
+    block.append(qs, qf, opts);
+    qhost.appendChild(block);
+  });
+
+  document.getElementById('reader-back-btn').onclick = showReading;
+  ui.show('reader');
+  document.getElementById('screen-reader').scrollTop = 0;
 }
 
 boot();
