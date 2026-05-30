@@ -15,9 +15,32 @@
 const NUM_OPTIONS = 4;
 const DISTRACTOR_WINDOW = 400;
 const ART_RE = /^(en|ett)\s+/i;
+const ART_VERB_RE = /^(en|ett|att)\s+/i;
+const SENT_PUNCT = /[.,!?;:»«"]+$/;
+const BUILD_MIN_TOKENS = 3;
+const BUILD_MAX_TOKENS = 8;
 
 function isArticledNoun(card) {
   return card?.pos === 'noun' && ART_RE.test(card.swedish || '');
+}
+
+/**
+ * Découpe la phrase d'exemple suédoise en mots (ponctuation retirée).
+ * Renvoie null si la carte n'a pas de couple example_sv/example_fr
+ * exploitable, ou si la phrase est trop courte/longue pour l'exercice
+ * de reconstruction (on veut rester faisable, pas frustrant).
+ */
+function sentenceTokens(card) {
+  const sv = card?.enrichment?.example_sv;
+  const fr = card?.enrichment?.example_fr;
+  if (!sv || !fr) return null;
+  const tokens = sv
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.replace(SENT_PUNCT, ''))
+    .filter(Boolean);
+  if (tokens.length < BUILD_MIN_TOKENS || tokens.length > BUILD_MAX_TOKENS) return null;
+  return tokens;
 }
 
 export function pickMode(card, cardState) {
@@ -35,9 +58,11 @@ export function pickMode(card, cardState) {
   }
 
   // reps >= 3 : phase consolidation
-  // listen 55% · mc 25% · reverse 15% · enett 5% (si noun)
-  if (hasAudio && r < 0.55) return 'listen';
-  if (r < 0.80) return 'mc';
+  // build 25% (si phrase exploitable) · listen · mc · reverse · enett
+  const canBuild = !!sentenceTokens(card);
+  if (canBuild && r < 0.25) return 'build';
+  if (hasAudio && r < 0.60) return 'listen';
+  if (r < 0.82) return 'mc';
   if (r < 0.95) return 'reverse';
   if (noun) return 'enett';
   return 'mc';
@@ -55,8 +80,25 @@ export function pickMode(card, cardState) {
  *   - mode='enett'  → options = ['en','ett'], correctIndex, promptText = noun sans article
  */
 export function buildExercise(card, cardState, allCards) {
-  const mode = pickMode(card, cardState);
+  let mode = pickMode(card, cardState);
   if (mode === 'flash') return { mode, card };
+
+  if (mode === 'build') {
+    const tokens = sentenceTokens(card);
+    if (tokens) {
+      const distractors = pickWordDistractors(card, allCards, tokens, 2);
+      const tiles = shuffle([...tokens, ...distractors]);
+      return {
+        mode,
+        card,
+        tokens,                              // ordre correct (mots nus)
+        tiles,                               // banque mélangée (mots + intrus)
+        promptText: card.enrichment.example_fr,
+        sentence: card.enrichment.example_sv, // affichée si erreur
+      };
+    }
+    mode = 'mc'; // garde-fou : phrase inutilisable → repli sur mc
+  }
 
   if (mode === 'enett') {
     const m = card.swedish.match(ART_RE);
@@ -123,6 +165,29 @@ function pickDistractors(card, allCards, field, n) {
     }
   }
   return result;
+}
+
+/**
+ * Mots-intrus pour la reconstruction : des mots suédois simples issus
+ * d'autres cartes, absents de la phrase cible. On prend le 1er mot du
+ * lemme (sans article en/ett/att) pour éviter les multi-mots bizarres.
+ */
+function pickWordDistractors(card, allCards, tokens, n) {
+  const used = new Set(tokens.map((t) => t.toLowerCase()));
+  const out = [];
+  const pool = shuffle([...allCards]);
+  for (const c of pool) {
+    if (out.length >= n) break;
+    if (c.id === card.id || !c.swedish) continue;
+    const stripped = c.swedish.replace(ART_VERB_RE, '').trim();
+    const w = (stripped.split(/\s+/)[0] || '').replace(SENT_PUNCT, '');
+    if (w.length < 2 || /[^A-Za-zÀ-ÿåäöÅÄÖ]/.test(w)) continue;
+    const lw = w.toLowerCase();
+    if (used.has(lw)) continue;
+    used.add(lw);
+    out.push(w);
+  }
+  return out;
 }
 
 function shuffle(arr) {

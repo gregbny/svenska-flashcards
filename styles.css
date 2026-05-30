@@ -129,6 +129,18 @@ section:not(.hidden) {
   pointer-events: none;
 }
 
+/* Tuile-mot de la reconstruction (mode build) : compacte, largeur auto */
+.build-chip {
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.95rem;
+  flex: 0 0 auto;
+}
+/* Tuile de banque "consommée" : on garde l'espace mais on la masque */
+.build-chip.chip-spent {
+  visibility: hidden;
+}
+
 /* XP floater "+10 XP" qui monte et disparaît */
 .xp-floater {
   position: absolute;

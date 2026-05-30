@@ -417,6 +417,7 @@ function setMode(mode) {
     listen:  'exercise-listen',
     reverse: 'exercise-reverse',
     enett:   'exercise-enett',
+    build:   'exercise-build',
   };
   for (const [m, id] of Object.entries(modes)) {
     const el = document.getElementById(id);
@@ -426,6 +427,7 @@ function setMode(mode) {
 
   // Bottom action bar : seul le bon bouton visible
   document.getElementById('flip-btn').classList.toggle('hidden', mode !== 'flash');
+  document.getElementById('build-check-btn').classList.toggle('hidden', mode !== 'build');
   document.getElementById('feedback-buttons').classList.add('hidden');
   document.getElementById('continue-btn').classList.add('hidden');
 }
@@ -550,6 +552,7 @@ function renderExercise() {
   else if (ex.mode === 'listen') renderListen(ex);
   else if (ex.mode === 'reverse') renderReverse(ex);
   else if (ex.mode === 'enett') renderEnett(ex);
+  else if (ex.mode === 'build') renderBuild(ex);
 }
 
 function renderFlash(c) {
@@ -603,6 +606,89 @@ function renderEnett(ex) {
   document.getElementById('enett-english').textContent = ex.card.english;
   renderOptions(document.getElementById('enett-options'), ex);
   playCardAudio(ex.card).catch(() => {});
+}
+
+function renderBuild(ex) {
+  const answer = document.getElementById('build-answer');
+  const bank = document.getElementById('build-bank');
+  const solution = document.getElementById('build-solution');
+  const checkBtn = document.getElementById('build-check-btn');
+
+  document.getElementById('build-prompt').textContent = ex.promptText;
+  answer.innerHTML = '';
+  bank.innerHTML = '';
+  solution.classList.add('hidden');
+  solution.textContent = '';
+
+  checkBtn.textContent = 'Vérifier';
+  checkBtn.disabled = true;
+  checkBtn.classList.remove('btn-red');
+  checkBtn.classList.add('btn-green');
+
+  const placed = []; // tuiles-réponse, dans l'ordre de dépôt
+  const refresh = () => { checkBtn.disabled = state.answered || placed.length === 0; };
+
+  ex.tiles.forEach((word) => {
+    const bankChip = document.createElement('button');
+    bankChip.className = 'opt-btn build-chip';
+    bankChip.textContent = word;
+    bankChip.onclick = () => {
+      if (state.answered || bankChip.classList.contains('chip-spent')) return;
+      // Déplace le mot vers la zone réponse ; la tuile de banque garde sa place (masquée)
+      bankChip.classList.add('chip-spent');
+      const ansChip = document.createElement('button');
+      ansChip.className = 'opt-btn build-chip';
+      ansChip.textContent = word;
+      ansChip.onclick = () => {
+        if (state.answered) return;
+        ansChip.remove();
+        bankChip.classList.remove('chip-spent');
+        const idx = placed.indexOf(ansChip);
+        if (idx >= 0) placed.splice(idx, 1);
+        refresh();
+      };
+      answer.appendChild(ansChip);
+      placed.push(ansChip);
+      refresh();
+    };
+    bank.appendChild(bankChip);
+  });
+
+  checkBtn.onclick = () => handleBuildCheck(ex, placed);
+}
+
+function handleBuildCheck(ex, placed) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const given = placed.map((c) => c.textContent.toLowerCase());
+  const expected = ex.tokens.map((t) => t.toLowerCase());
+  const correct =
+    given.length === expected.length && given.every((w, i) => w === expected[i]);
+
+  placed.forEach((c) => {
+    c.disabled = true;
+    c.classList.add(correct ? 'opt-correct' : 'opt-wrong');
+  });
+  document.querySelectorAll('#build-bank .build-chip').forEach((b) => { b.disabled = true; });
+
+  if (correct) {
+    playCorrect();
+  } else {
+    playWrong();
+    const solution = document.getElementById('build-solution');
+    solution.textContent = ex.sentence;
+    solution.classList.remove('hidden');
+    setTimeout(() => playCardAudio(ex.card).catch(() => {}), 400);
+  }
+
+  const checkBtn = document.getElementById('build-check-btn');
+  checkBtn.textContent = 'Continuer';
+  checkBtn.disabled = false;
+  checkBtn.classList.toggle('btn-green', correct);
+  checkBtn.classList.toggle('btn-red', !correct);
+  state.pendingRating = correct ? 'good' : 'hard';
+  checkBtn.onclick = advance;
 }
 
 function renderOptions(container, ex) {

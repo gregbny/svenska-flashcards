@@ -321,6 +321,17 @@
         <div id="enett-english" class="text-sm text-duo-ink/60 italic text-center mb-2">—</div>
         <div id="enett-options" class="grid grid-cols-2 gap-3"></div>
       </div>
+
+      <!-- ─── MODE: BUILD (reconstruction de phrase FR → SV) ─── -->
+      <div id="exercise-build" class="hidden w-full max-w-sm flex-col gap-4 mb-4">
+        <div class="text-xs text-duo-ink/50 uppercase tracking-widest text-center">Reconstruis la phrase en suédois</div>
+        <div id="build-prompt" class="text-xl font-extrabold text-duo-green leading-snug text-center px-2">—</div>
+        <!-- Zone de réponse : les mots déposés dans l'ordre -->
+        <div id="build-answer" class="min-h-[56px] flex flex-wrap gap-2 content-start border-b-2 border-duo-border pb-3"></div>
+        <!-- Banque de mots (tuiles à placer) -->
+        <div id="build-bank" class="flex flex-wrap gap-2 justify-center"></div>
+        <div id="build-solution" class="hidden text-sm text-center text-duo-ink/70 italic"></div>
+      </div>
     </div>
 
     <!-- Feedback buttons (FLASH only, hidden until card is flipped) -->
@@ -347,6 +358,11 @@
     <!-- Continue prompt (MC / Listen, après réponse) -->
     <button id="continue-btn" class="btn-duo btn-green w-full mt-2 hidden">
       Continuer
+    </button>
+
+    <!-- Vérifier (mode BUILD) — devient "Continuer" après vérification -->
+    <button id="build-check-btn" class="btn-duo btn-green w-full mt-2 hidden">
+      Vérifier
     </button>
   </section>
 
