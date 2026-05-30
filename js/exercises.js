@@ -25,6 +25,25 @@ function isArticledNoun(card) {
 }
 
 /**
+ * Réduit une glose anglaise verbeuse (style dictionnaire) à son 1er sens,
+ * lisible sur une tuile. Ex :
+ *   "1. much, many, a lot (of); 2. [~ folk] a lot of people"  → "much, many, a lot (of)"
+ *   "1. inside, into; 2. [jag gick ~ i huset] I went into..."  → "inside, into"
+ * Sûr : renvoie la chaîne d'origine si le résultat serait vide.
+ */
+export function shortGloss(s) {
+  if (!s) return s;
+  const orig = String(s).trim();
+  let t = orig
+    .replace(/\[[^\]]*\]/g, ' ')        // retire les exemples [ ... ]
+    .replace(/^\s*\d+\.\s*/, '');        // retire un préfixe "1. "
+  t = t.split(/\s*;\s*\d+\.\s*/)[0];    // coupe au 2e sens numéroté
+  t = t.split(/\s*;\s*/)[0];            // sinon, garde la 1re clause avant ";"
+  t = t.replace(/\s{2,}/g, ' ').replace(/[\s,;:]+$/, '').trim();
+  return t || orig;
+}
+
+/**
  * Découpe la phrase d'exemple suédoise en mots (ponctuation retirée).
  * Renvoie null si la carte n'a pas de couple example_sv/example_fr
  * exploitable, ou si la phrase est trop courte/longue pour l'exercice
@@ -113,11 +132,20 @@ export function buildExercise(card, cardState, allCards) {
   const optionField = mode === 'mc' ? 'english' : 'swedish';
   const correctValue = card[optionField];
   const distractors = pickDistractors(card, allCards, optionField, NUM_OPTIONS - 1);
-  const options = shuffle([correctValue, ...distractors]);
+  let options = shuffle([correctValue, ...distractors]);
   const correctIndex = options.indexOf(correctValue);
 
+  // QCM : on raccourcit les gloses anglaises pour des options lisibles,
+  // mais seulement si elles restent toutes distinctes (sinon ambiguïté).
+  if (mode === 'mc') {
+    const short = options.map(shortGloss);
+    if (new Set(short.map((x) => x.toLowerCase())).size === short.length) {
+      options = short;
+    }
+  }
+
   const promptText =
-    mode === 'reverse' ? card.english :
+    mode === 'reverse' ? shortGloss(card.english) :
     mode === 'mc'      ? card.swedish :
     null; // listen: pas de prompt texte
 

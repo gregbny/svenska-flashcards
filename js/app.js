@@ -14,6 +14,7 @@ import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
 import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen, warmupCards, awardBonusXP } from './session.js';
 import { runImport } from './import.js';
+import { shortGloss } from './exercises.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
 import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sound.js';
 
@@ -491,7 +492,7 @@ function runWarmup() {
     document.getElementById('quit-match-btn').onclick = () => done(false);
 
     const leftItems = shuffleArr(cards.map((c) => ({ id: c.id, text: c.swedish })));
-    const rightItems = shuffleArr(cards.map((c) => ({ id: c.id, text: c.english })));
+    const rightItems = shuffleArr(cards.map((c) => ({ id: c.id, text: shortGloss(c.english) })));
 
     let pending = null;   // { el, id, side }
     let matched = 0;

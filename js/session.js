@@ -12,7 +12,7 @@
 
 import { getAllCards } from './db.js';
 import { DEFAULT_STATE, sm2Apply, isDue } from './sm2.js';
-import { buildExercise } from './exercises.js';
+import { buildExercise, shortGloss } from './exercises.js';
 
 const LS_KEY = 'svenska.state.v1';
 const PRIORITY_LIMIT = 2000;
@@ -338,24 +338,29 @@ function daysBetween(a, b) {
  * identiques). Renvoie [] si pas assez de matière (l'appelant saute alors
  * l'échauffement proprement).
  */
+const WARMUP_CONCRETE_POS = new Set(['noun', 'verb', 'adjective', 'adverb', 'travel']);
+
 export function warmupCards(k = 5, min = 4) {
   if (!_globalState) return [];
   const ids = new Set();
   const seenSv = new Set();
   const seenEn = new Set();
-  const pool = [];
+  const primary = [];   // mots concrets (noms, verbes, adjectifs…)
+  const fallback = [];  // mots-outils (prépositions, pronoms, conjonctions…)
   for (const c of _queue) {
     if (ids.has(c.id) || !c.swedish || !c.english) continue;
     const s = _globalState.cardStates[c.id];
     if (!s || (s.reps ?? 0) < 1) continue;
     const sv = c.swedish.trim().toLowerCase();
-    const en = c.english.trim().toLowerCase();
-    if (seenSv.has(sv) || seenEn.has(en)) continue;
+    const en = shortGloss(c.english).trim().toLowerCase();
+    if (!en || seenSv.has(sv) || seenEn.has(en)) continue;
     ids.add(c.id); seenSv.add(sv); seenEn.add(en);
-    pool.push(c);
+    (WARMUP_CONCRETE_POS.has(c.pos) ? primary : fallback).push(c);
   }
+  // Concrets en priorité, complétés par les mots-outils si besoin.
+  const pool = [...shuffle(primary), ...shuffle(fallback)];
   if (pool.length < min) return [];
-  return shuffle(pool).slice(0, k);
+  return pool.slice(0, k);
 }
 
 /**
