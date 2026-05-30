@@ -351,6 +351,23 @@
   </section>
 
   <!-- ============================================================
+       SCREEN: MATCH (échauffement — relier les paires SV ↔ EN)
+       ============================================================ -->
+  <section id="screen-match" class="hidden flex-col px-4 py-4">
+    <header class="flex items-center gap-3 mb-2 relative">
+      <button id="quit-match-btn" class="text-duo-ink/40 text-3xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+      <div class="flex-1 text-center text-xs font-bold text-duo-ink/50 uppercase tracking-widest">Échauffement · Relie les paires</div>
+      <div id="match-xp-host" class="absolute right-0 top-8 pointer-events-none"></div>
+    </header>
+    <div class="flex-1 flex flex-col items-center justify-center">
+      <div class="w-full max-w-sm grid grid-cols-2 gap-3">
+        <div id="match-left" class="flex flex-col gap-3"></div>
+        <div id="match-right" class="flex flex-col gap-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
        SCREEN: DONE (end of session)
        ============================================================ -->
   <section id="screen-done" class="hidden flex-col items-center justify-center px-6 py-6">

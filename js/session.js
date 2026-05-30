@@ -327,6 +327,49 @@ function daysBetween(a, b) {
   return Math.round((new Date(b) - new Date(a)) / 86_400_000);
 }
 
+// ─── Warm-up (mini-jeu "matching") ──────────────────────────────
+/**
+ * Cartes pour l'échauffement matching. On ne prend QUE des cartes déjà
+ * vues (reps>=1) présentes dans la file du jour : relier SV↔EN doit être
+ * de la reconnaissance, pas de la devinette → jamais de mise en échec.
+ * Dédupliqué par id ET par texte (SV et EN uniques pour éviter deux tuiles
+ * identiques). Renvoie [] si pas assez de matière (l'appelant saute alors
+ * l'échauffement proprement).
+ */
+export function warmupCards(k = 5, min = 4) {
+  if (!_globalState) return [];
+  const ids = new Set();
+  const seenSv = new Set();
+  const seenEn = new Set();
+  const pool = [];
+  for (const c of _queue) {
+    if (ids.has(c.id) || !c.swedish || !c.english) continue;
+    const s = _globalState.cardStates[c.id];
+    if (!s || (s.reps ?? 0) < 1) continue;
+    const sv = c.swedish.trim().toLowerCase();
+    const en = c.english.trim().toLowerCase();
+    if (seenSv.has(sv) || seenEn.has(en)) continue;
+    ids.add(c.id); seenSv.add(sv); seenEn.add(en);
+    pool.push(c);
+  }
+  if (pool.length < min) return [];
+  return shuffle(pool).slice(0, k);
+}
+
+/**
+ * Crédite un bonus d'XP hors SM-2 (échauffement, défis…). Persiste et
+ * alimente les mêmes compteurs que l'XP de révision.
+ */
+export function awardBonusXP(amount) {
+  if (!_globalState || !amount) return 0;
+  const today = todayStr();
+  _globalState.xp.total = (_globalState.xp.total ?? 0) + amount;
+  _globalState.xp.byDay[today] = (_globalState.xp.byDay[today] ?? 0) + amount;
+  _meta.xpGained += amount;
+  saveState(_globalState);
+  return amount;
+}
+
 // ─── Stats ──────────────────────────────────────────────────────
 export function sessionStats() {
   // Lazy load depuis localStorage si aucune session active (ex: écran home après reload)

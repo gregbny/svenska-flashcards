@@ -115,6 +115,19 @@ section:not(.hidden) {
 .opt-btn.opt-faded {
   opacity: 0.5;
 }
+/* Tuile de matching sélectionnée (en attente de sa paire) */
+.opt-btn.opt-selected {
+  background: #E5F6FF;
+  border-color: #1CB0F6;
+  color: #1899D6;
+}
+/* Tuile de matching résolue : disparaît en douceur */
+.opt-btn.opt-matched {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
 
 /* XP floater "+10 XP" qui monte et disparaît */
 .xp-floater {

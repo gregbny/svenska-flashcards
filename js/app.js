@@ -12,7 +12,7 @@
 
 import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
-import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen } from './session.js';
+import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen, warmupCards, awardBonusXP } from './session.js';
 import { runImport } from './import.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
 import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sound.js';
@@ -361,6 +361,11 @@ async function beginStudy() {
   // On attend la fin du unlock avant de lancer la 1re carte.
   await unlockAudio();
   await startSession({ target: DAILY_TARGET, maxNew: 10 });
+
+  // Échauffement "matching" avant la session (sauté si pas assez de
+  // cartes déjà vues — typiquement les toutes premières sessions).
+  await runWarmup();
+
   ui.show('study');
 
   document.getElementById('quit-session-btn').onclick = () => {
@@ -423,6 +428,106 @@ function setMode(mode) {
   document.getElementById('flip-btn').classList.toggle('hidden', mode !== 'flash');
   document.getElementById('feedback-buttons').classList.add('hidden');
   document.getElementById('continue-btn').classList.add('hidden');
+}
+
+// ───────────────────────── Warm-up (matching) ─────────────────────────
+const MATCH_XP_PER_PAIR = 4;
+
+/**
+ * Mini-jeu d'échauffement : relier 5 paires SV ↔ EN. Résout la Promise
+ * quand toutes les paires sont trouvées, quand l'utilisateur quitte, ou
+ * (false immédiat) s'il n'y a pas assez de cartes déjà vues.
+ * N'appelle JAMAIS rateCard → la mécanique SM-2 reste intacte.
+ */
+function runWarmup() {
+  return new Promise((resolve) => {
+    const cards = warmupCards(5);
+    if (cards.length < 4) { resolve(false); return; }
+    ui.show('match');
+
+    const left = document.getElementById('match-left');
+    const right = document.getElementById('match-right');
+    left.innerHTML = '';
+    right.innerHTML = '';
+
+    let settled = false;
+    const done = (val) => { if (!settled) { settled = true; resolve(val); } };
+    document.getElementById('quit-match-btn').onclick = () => done(false);
+
+    const leftItems = shuffleArr(cards.map((c) => ({ id: c.id, text: c.swedish })));
+    const rightItems = shuffleArr(cards.map((c) => ({ id: c.id, text: c.english })));
+
+    let pending = null;   // { el, id, side }
+    let matched = 0;
+    let locked = false;   // anti double-tap pendant l'anim d'erreur
+
+    const onTile = (btn, id, side) => {
+      if (locked || btn.classList.contains('opt-matched')) return;
+
+      // Re-clic sur la tuile sélectionnée → désélection
+      if (pending && pending.el === btn) {
+        btn.classList.remove('opt-selected');
+        pending = null;
+        return;
+      }
+      // Rien en attente, ou clic sur la même colonne → (re)sélectionne
+      if (!pending || pending.side === side) {
+        if (pending) pending.el.classList.remove('opt-selected');
+        btn.classList.add('opt-selected');
+        pending = { el: btn, id, side };
+        return;
+      }
+
+      // Deuxième tuile, autre colonne → évaluation
+      const a = pending; pending = null;
+      a.el.classList.remove('opt-selected');
+
+      if (a.id === id) {
+        playCorrect();
+        for (const el of [a.el, btn]) {
+          el.classList.add('opt-correct');
+          setTimeout(() => el.classList.add('opt-matched'), 150);
+        }
+        matched += 1;
+        if (matched === cards.length) {
+          const gained = awardBonusXP(matched * MATCH_XP_PER_PAIR);
+          showXpFloater(gained, 'match-xp-host');
+          playComplete();
+          setTimeout(() => done(true), 650);
+        }
+      } else {
+        playWrong();
+        locked = true;
+        a.el.classList.add('opt-wrong');
+        btn.classList.add('opt-wrong');
+        setTimeout(() => {
+          a.el.classList.remove('opt-wrong');
+          btn.classList.remove('opt-wrong');
+          locked = false;
+        }, 500);
+      }
+    };
+
+    const makeTile = (item, side, container) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = item.text;
+      btn.onclick = () => onTile(btn, item.id, side);
+      container.appendChild(btn);
+    };
+
+    leftItems.forEach((it) => makeTile(it, 'L', left));
+    rightItems.forEach((it) => makeTile(it, 'R', right));
+  });
+}
+
+function shuffleArr(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 function renderExercise() {
@@ -540,9 +645,9 @@ async function handleAnswer(ex, chosenIndex, btn, container) {
   state.pendingRating = correct ? 'good' : 'hard';
 }
 
-function showXpFloater(amount) {
+function showXpFloater(amount, hostId = 'xp-floater-host') {
   if (!amount) return;
-  const host = document.getElementById('xp-floater-host');
+  const host = document.getElementById(hostId);
   if (!host) return;
   const el = document.createElement('div');
   el.className = 'xp-floater';

@@ -19,11 +19,16 @@ export function sm2Apply(state, rating, now = Date.now()) {
   const s = { ...state };
 
   if (q < 3) {
-    s.reps = 0;
-    s.interval = 0;
-    s.lapses += 1;
-    // due reste null → la carte repassera dans la même session
-    s.due = null;
+    // "hard" : on ne remet PLUS tout à zéro (trop punitif, casse le
+    // sentiment de progression). On recule d'un seul cran et on raccourcit
+    // l'intervalle, sans jamais retomber sous reps=1 une fois la carte vue.
+    // La carte repasse quand même dans la même session : c'est session.js
+    // (rateCard → _requeue) qui s'en charge, indépendamment de `due`.
+    s.lapses = (s.lapses ?? 0) + 1;
+    s.reps = Math.max(1, s.reps - 1);
+    s.ease = Math.max(1.3, s.ease - 0.2);
+    s.interval = Math.max(1, Math.round((s.interval || 1) * 0.5));
+    s.due = new Date(now + s.interval * 86_400_000).toISOString();
   } else {
     s.reps += 1;
     if (s.reps === 1) {

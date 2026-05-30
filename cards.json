@@ -98621,7 +98621,11 @@
     "example": null,
     "phonetic": null,
     "freq_rank": 2482,
-    "cefr": "A2"
+    "cefr": "A2",
+    "enrichment": {
+      "example_sv": "Det är en stor kongress i dag.",
+      "example_fr": "C'est un grand congrès aujourd'hui."
+    }
   },
   {
     "id": 1598022799068,
