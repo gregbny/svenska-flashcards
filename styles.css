@@ -141,6 +141,14 @@ section:not(.hidden) {
   visibility: hidden;
 }
 
+/* Trou à compléter (mode cloze) */
+.cloze-blank {
+  color: #1CB0F6;
+  letter-spacing: 0.05em;
+  border-bottom: 3px solid #1CB0F6;
+  padding: 0 0.15em;
+}
+
 /* XP floater "+10 XP" qui monte et disparaît */
 .xp-floater {
   position: absolute;

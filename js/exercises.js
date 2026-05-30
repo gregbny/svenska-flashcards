@@ -62,6 +62,54 @@ function sentenceTokens(card) {
   return tokens;
 }
 
+function hasExample(card) {
+  const e = card?.enrichment;
+  return !!(e && e.example_sv && e.example_fr);
+}
+
+/**
+ * Prépare un texte à trou : on masque de préférence LE mot de la carte
+ * (retrouvé dans la phrase), sinon le mot de contenu le plus long.
+ * Renvoie { answer, maskedSentence, tokensBare } ou null si inexploitable.
+ */
+function clozeData(card) {
+  if (!hasExample(card)) return null;
+  const sv = card.enrichment.example_sv.trim();
+  const rawTokens = sv.split(/\s+/); // garde la ponctuation pour l'affichage
+  if (rawTokens.length < 3 || rawTokens.length > 12) return null;
+
+  const bare = rawTokens.map((t) => t.replace(/^[«"'(]+/, '').replace(SENT_PUNCT, ''));
+  const stem = (card.swedish || '')
+    .replace(ART_VERB_RE, '')
+    .trim()
+    .split(/\s+/)[0]
+    ?.toLowerCase() || '';
+
+  // 1) on tente de masquer le mot de la carte (radical commun)
+  let idx = -1;
+  if (stem.length >= 2) {
+    idx = bare.findIndex((w) => {
+      const lw = w.toLowerCase();
+      if (lw.length < 2) return false;
+      return lw === stem || lw.startsWith(stem) || stem.startsWith(lw);
+    });
+  }
+  // 2) sinon : le mot le plus long (≥ 3 lettres)
+  if (idx < 0) {
+    let bestLen = 2;
+    bare.forEach((w, i) => { if (w.length > bestLen) { bestLen = w.length; idx = i; } });
+  }
+  if (idx < 0) return null;
+
+  const answer = bare[idx];
+  if (!answer || answer.length < 2) return null;
+
+  const trailing = (rawTokens[idx].match(SENT_PUNCT) || [''])[0];
+  const masked = rawTokens.slice();
+  masked[idx] = '____' + trailing;
+  return { answer, maskedSentence: masked.join(' '), tokensBare: bare };
+}
+
 export function pickMode(card, cardState) {
   const reps = cardState?.reps ?? 0;
   const hasAudio = !!card.audio_file;
@@ -79,9 +127,11 @@ export function pickMode(card, cardState) {
   // reps >= 3 : phase consolidation
   // build 25% (si phrase exploitable) · listen · mc · reverse · enett
   const canBuild = !!sentenceTokens(card);
-  if (canBuild && r < 0.25) return 'build';
-  if (hasAudio && r < 0.60) return 'listen';
-  if (r < 0.82) return 'mc';
+  const canCloze = hasExample(card);
+  if (canBuild && r < 0.20) return 'build';
+  if (canCloze && r < 0.38) return 'cloze';
+  if (hasAudio && r < 0.65) return 'listen';
+  if (r < 0.84) return 'mc';
   if (r < 0.95) return 'reverse';
   if (noun) return 'enett';
   return 'mc';
@@ -117,6 +167,26 @@ export function buildExercise(card, cardState, allCards) {
       };
     }
     mode = 'mc'; // garde-fou : phrase inutilisable → repli sur mc
+  }
+
+  if (mode === 'cloze') {
+    const cd = clozeData(card);
+    if (cd) {
+      const used = [cd.answer, ...cd.tokensBare];
+      const distractors = pickWordDistractors(card, allCards, used, NUM_OPTIONS - 1);
+      const options = shuffle([cd.answer, ...distractors]);
+      const correctIndex = options.indexOf(cd.answer);
+      return {
+        mode,
+        card,
+        options,
+        correctIndex,
+        promptText: card.enrichment.example_fr, // indice FR
+        maskedSentence: cd.maskedSentence,
+        sentence: card.enrichment.example_sv,
+      };
+    }
+    mode = 'mc'; // garde-fou
   }
 
   if (mode === 'enett') {

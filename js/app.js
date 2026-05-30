@@ -453,6 +453,7 @@ function setMode(mode) {
     reverse: 'exercise-reverse',
     enett:   'exercise-enett',
     build:   'exercise-build',
+    cloze:   'exercise-cloze',
   };
   for (const [m, id] of Object.entries(modes)) {
     const el = document.getElementById(id);
@@ -588,6 +589,7 @@ function renderExercise() {
   else if (ex.mode === 'reverse') renderReverse(ex);
   else if (ex.mode === 'enett') renderEnett(ex);
   else if (ex.mode === 'build') renderBuild(ex);
+  else if (ex.mode === 'cloze') renderCloze(ex);
 }
 
 function renderFlash(c) {
@@ -641,6 +643,17 @@ function renderEnett(ex) {
   document.getElementById('enett-english').textContent = ex.card.english;
   renderOptions(document.getElementById('enett-options'), ex);
   playCardAudio(ex.card).catch(() => {});
+}
+
+function renderCloze(ex) {
+  const el = document.getElementById('cloze-sentence');
+  // textContent-safe puis on stylise le blanc
+  const safe = ex.maskedSentence.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  el.innerHTML = safe.replace('____', '<span class="cloze-blank">____</span>');
+  document.getElementById('cloze-hint').textContent = ex.promptText;
+  renderOptions(document.getElementById('cloze-options'), ex);
+  // Pas d'audio auto : on ne révèle pas le mot à deviner (handleAnswer le
+  // rejoue après une mauvaise réponse pour aider à mémoriser).
 }
 
 function renderBuild(ex) {
