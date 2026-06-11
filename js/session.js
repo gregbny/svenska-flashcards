@@ -257,6 +257,33 @@ export async function totalSeen() {
   return Object.keys(gs.cardStates ?? {}).length;
 }
 
+/**
+ * Compteurs de diagnostic (écran Compte) : permet de comprendre à distance
+ * pourquoi tel type d'exercice apparaît ou non (composition de l'arriéré).
+ */
+export async function diagnostics() {
+  const gs = _globalState ?? ensureState(loadState());
+  const allCards = await getAllCards();
+  const now = Date.now();
+  let due = 0, dueRich = 0, dueWithEx = 0, r1 = 0, r2 = 0, r3 = 0, seenWithEx = 0;
+  for (const c of allCards) {
+    const s = gs.cardStates?.[c.id];
+    if (!s) continue;
+    const reps = s.reps ?? 0;
+    if (reps === 1) r1 += 1;
+    else if (reps === 2) r2 += 1;
+    else if (reps >= 3) r3 += 1;
+    const ex = !!(c.enrichment?.example_sv && c.enrichment?.example_fr);
+    if (ex) seenWithEx += 1;
+    if (isDue(s, now)) {
+      due += 1;
+      if (ex) dueWithEx += 1;
+      if (reps >= 2 && ex) dueRich += 1;
+    }
+  }
+  return { due, dueRich, dueWithEx, r1, r2, r3, seenWithEx };
+}
+
 export async function homeCounters({ target = 25, maxNew = 6 } = {}) {
   const gs = _globalState ?? ensureState(loadState());
   const allCards = await getAllCards();

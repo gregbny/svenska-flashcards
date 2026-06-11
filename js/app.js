@@ -7,7 +7,7 @@
 
 import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
-import { startSession, currentCard, currentExercise, replaceExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen, warmupCards, awardBonusXP } from './session.js';
+import { startSession, currentCard, currentExercise, replaceExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen, warmupCards, awardBonusXP, diagnostics } from './session.js';
 import { runImport } from './import.js';
 import { shortGloss } from './exercises.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
@@ -15,6 +15,8 @@ import { playCorrect, playWrong, playComplete, toggleMute, isMuted } from './sou
 
 const DEFAULT_GOAL_DATE = '2026-07-20';
 const DAILY_TARGET = 25;
+// Affiché dans le diagnostic (écran Compte) — garder en phase avec sw.js
+const APP_BUILD = 'v23';
 
 async function getGoalDate() {
   const v = await getMeta('goalDate');
@@ -376,6 +378,16 @@ async function showAccount() {
     `;
     rows.appendChild(div);
   }
+
+  // Diagnostic : composition de l'arriéré + version — pour comprendre à
+  // distance pourquoi tel exercice apparaît (ou non).
+  diagnostics().then((d) => {
+    document.getElementById('account-diag').innerHTML =
+      `Version : <b>${APP_BUILD}</b><br>` +
+      `Révisions dues : <b>${d.due}</b> · avec exemple : <b>${d.dueWithEx}</b> · riches (reps≥2 + ex.) : <b>${d.dueRich}</b><br>` +
+      `Cartes vues — reps 1 : <b>${d.r1}</b> · reps 2 : <b>${d.r2}</b> · reps ≥3 : <b>${d.r3}</b><br>` +
+      `Vues avec phrase exemple : <b>${d.seenWithEx}</b>`;
+  }).catch(() => {});
 
   document.getElementById('account-back-btn').onclick = () => showHome();
   document.getElementById('account-reset-btn').onclick = async () => {

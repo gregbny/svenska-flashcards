@@ -118,16 +118,20 @@ export function pickMode(card, cardState) {
 
   if (reps === 0) return 'flash';
 
+  const canCloze = hasExample(card);
+
   if (reps === 1) {
-    // Phase reconnaissance : mc dominant, soupçon de en/ett pour les noms
-    if (noun && r < 0.15) return 'enett';
+    // Première revue : compréhension guidée. Le cloze (choix multiples +
+    // indice FR) n'est pas plus dur qu'un QCM — on le sert dès qu'une
+    // phrase exemple existe, sinon mc ; soupçon de en/ett pour les noms.
+    if (canCloze && r < 0.35) return 'cloze';
+    if (noun && r < 0.45) return 'enett';
     return 'mc';
   }
 
   // reps >= 2 : phase consolidation — priorité aux exercices riches
   // (build/cloze) dès qu'une phrase exemple existe (100% des A1/A2).
   const canBuild = !!sentenceTokens(card);
-  const canCloze = hasExample(card);
   if (canBuild && r < 0.25) return 'build';
   if (canCloze && r < 0.50) return 'cloze';
   if (hasAudio && r < 0.72) return 'listen';
