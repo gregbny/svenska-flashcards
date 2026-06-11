@@ -456,6 +456,12 @@ function setMode(mode) {
     const el = document.getElementById(id);
     el.classList.toggle('hidden', m !== mode);
     if (m !== 'flash') el.classList.toggle('flex', m === mode);
+    if (m === mode) {
+      // Réarme l'animation d'entrée de l'exercice (reflow → restart)
+      el.classList.remove('ex-enter');
+      void el.offsetWidth;
+      el.classList.add('ex-enter');
+    }
   }
 
   // Bottom action bar : seul le bon bouton visible
@@ -463,6 +469,21 @@ function setMode(mode) {
   document.getElementById('build-check-btn').classList.toggle('hidden', mode !== 'build');
   document.getElementById('feedback-buttons').classList.add('hidden');
   document.getElementById('continue-btn').classList.add('hidden');
+  document.getElementById('feedback-banner').classList.add('hidden');
+}
+
+// ─── Bandeau de feedback (sous l'exercice) ───
+const PRAISE = ['Bra jobbat !', 'Perfekt !', 'Snyggt !', 'Utmärkt !', 'Toppen !'];
+
+function showFeedback(correct, detail, wrongTitle = 'Bonne réponse :') {
+  const banner = document.getElementById('feedback-banner');
+  banner.classList.remove('hidden', 'fb-correct', 'fb-wrong');
+  banner.classList.add(correct ? 'fb-correct' : 'fb-wrong');
+  document.getElementById('feedback-title').textContent =
+    correct ? PRAISE[Math.floor(Math.random() * PRAISE.length)] : wrongTitle;
+  const det = document.getElementById('feedback-detail');
+  det.textContent = detail ?? '';
+  det.classList.toggle('hidden', !detail);
 }
 
 // ───────────────────────── Warm-up (matching) ─────────────────────────
@@ -656,14 +677,11 @@ function renderCloze(ex) {
 function renderBuild(ex) {
   const answer = document.getElementById('build-answer');
   const bank = document.getElementById('build-bank');
-  const solution = document.getElementById('build-solution');
   const checkBtn = document.getElementById('build-check-btn');
 
   document.getElementById('build-prompt').textContent = ex.promptText;
   answer.innerHTML = '';
   bank.innerHTML = '';
-  solution.classList.add('hidden');
-  solution.textContent = '';
 
   checkBtn.textContent = 'Vérifier';
   checkBtn.disabled = true;
@@ -721,11 +739,9 @@ function handleBuildCheck(ex, placed) {
     playCorrect();
   } else {
     playWrong();
-    const solution = document.getElementById('build-solution');
-    solution.textContent = ex.sentence;
-    solution.classList.remove('hidden');
     setTimeout(() => playCardAudio(ex.card).catch(() => {}), 400);
   }
+  showFeedback(correct, correct ? null : ex.sentence, 'La bonne phrase :');
 
   const checkBtn = document.getElementById('build-check-btn');
   checkBtn.textContent = 'Continuer';
@@ -767,6 +783,14 @@ async function handleAnswer(ex, chosenIndex, btn, container) {
   if (!correct) {
     setTimeout(() => playCardAudio(ex.card).catch(() => {}), 400);
   }
+
+  // Bandeau : louange si correct ; sinon la bonne réponse. Pour le cloze,
+  // on montre toujours la phrase complète (contexte = mémorisation).
+  const correctText = ex.options[ex.correctIndex];
+  let detail = null;
+  if (ex.mode === 'cloze') detail = ex.sentence;
+  else if (!correct) detail = ex.mode === 'enett' ? `${correctText} ${ex.promptText}` : correctText;
+  showFeedback(correct, detail);
 
   document.getElementById('continue-btn').classList.remove('hidden');
   document.getElementById('continue-btn').classList.toggle('btn-green', correct);
@@ -854,17 +878,51 @@ function updateSessionBar() {
 }
 
 // ───────────────────────── Done screen ─────────────────────────
+/** Compteur animé (ease-out cubique) pour les chiffres du récap. */
+function countUp(id, to, { prefix = '', suffix = '' } = {}) {
+  const el = document.getElementById(id);
+  const dur = 700;
+  const t0 = performance.now();
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = `${prefix}${Math.round(to * eased)}${suffix}`;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function launchConfetti(n = 30) {
+  const host = document.getElementById('confetti-host');
+  if (!host) return;
+  host.innerHTML = '';
+  const colors = ['#58CC02', '#1CB0F6', '#FF9600', '#FF4B4B', '#FFD900', '#CE82FF'];
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = `${Math.random() * 0.5}s`;
+    p.style.animationDuration = `${1.6 + Math.random() * 1.3}s`;
+    p.style.setProperty('--cf-x', `${Math.random() * 140 - 70}px`);
+    p.style.setProperty('--cf-r', `${Math.random() * 720 - 360}deg`);
+    host.appendChild(p);
+  }
+  setTimeout(() => { host.innerHTML = ''; }, 3600);
+}
+
 function finishSession() {
   ui.show('done');
   const s = sessionStats();
-  document.getElementById('recap-total').textContent = s.sessionDone ?? 0;
-  document.getElementById('recap-new').textContent = s.sessionNew ?? 0;
   const acc = s.sessionTotal ? Math.round(((s.sessionCorrect ?? 0) / s.sessionTotal) * 100) : 0;
-  document.getElementById('recap-accuracy').textContent = `${acc}%`;
+  countUp('recap-total', s.sessionDone ?? 0);
+  countUp('recap-new', s.sessionNew ?? 0);
+  countUp('recap-accuracy', acc, { suffix: '%' });
+  countUp('recap-xp', s.sessionXP ?? 0, { prefix: '+' });
   document.getElementById('recap-streak').textContent = s.streak ?? 0;
-  document.getElementById('recap-xp').textContent = `+${s.sessionXP ?? 0}`;
 
   playComplete();
+  launchConfetti();
 
   document.getElementById('back-home-btn').onclick = showHome;
 }

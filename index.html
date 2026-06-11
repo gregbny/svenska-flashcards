@@ -10,34 +10,8 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <title>Svenska — Flashcards</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            duo: {
-              green: '#58CC02',
-              greenDark: '#46A302',
-              red: '#FF4B4B',
-              orange: '#FF9600',
-              blue: '#1CB0F6',
-              ink: '#3C3C3C',
-              soft: '#F7F7F7',
-              border: '#E5E5E5',
-            },
-          },
-          boxShadow: {
-            duo: '0 4px 0 0 rgb(0 0 0 / 0.08)',
-            duoBtn: '0 4px 0 0 var(--btn-shadow, #46A302)',
-          },
-          fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-          },
-        },
-      },
-    };
-  </script>
+  <!-- Tailwind précompilé (tailwind.config.js) — voir la commande de régénération dans la config -->
+  <link rel="stylesheet" href="tailwind.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="bg-white text-duo-ink font-sans antialiased select-none">
@@ -371,7 +345,6 @@
         <div id="build-answer" class="min-h-[56px] flex flex-wrap gap-2 content-start border-b-2 border-duo-border pb-3"></div>
         <!-- Banque de mots (tuiles à placer) -->
         <div id="build-bank" class="flex flex-wrap gap-2 justify-center"></div>
-        <div id="build-solution" class="hidden text-sm text-center text-duo-ink/70 italic"></div>
       </div>
 
       <!-- ─── MODE: CLOZE (texte à trou) ─── -->
@@ -381,6 +354,12 @@
         <div id="cloze-hint" class="text-sm text-duo-ink/60 italic text-center mb-1">—</div>
         <div id="cloze-options" class="grid grid-cols-2 gap-2"></div>
       </div>
+    </div>
+
+    <!-- Bandeau de feedback (QCM / écoute / cloze / build) -->
+    <div id="feedback-banner" class="fb-banner hidden">
+      <div id="feedback-title"></div>
+      <div id="feedback-detail" class="fb-detail hidden"></div>
     </div>
 
     <!-- Feedback buttons (FLASH only, hidden until card is flipped) -->
@@ -435,7 +414,8 @@
   <!-- ============================================================
        SCREEN: DONE (end of session)
        ============================================================ -->
-  <section id="screen-done" class="hidden flex-col items-center justify-center px-6 py-6">
+  <section id="screen-done" class="hidden flex-col items-center justify-center px-6 py-6 relative overflow-hidden">
+    <div id="confetti-host" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
     <div class="text-7xl mb-4">🎉</div>
     <h2 class="text-3xl font-extrabold mb-2 text-center">Session terminée !</h2>
     <p class="text-duo-ink/60 text-center mb-8">Bra jobbat !</p>

@@ -245,3 +245,59 @@ section:not(.hidden) {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.03); }
 }
+
+/* ─── Transitions d'écran & d'exercice ─────────────────────────── */
+
+/* Entrée d'un écran : fondu + léger glissement vertical */
+.screen-enter {
+  animation: screen-in 0.28s ease-out;
+}
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Entrée d'un exercice : glissement latéral type Duolingo */
+.ex-enter {
+  animation: ex-in 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes ex-in {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Bandeau de feedback (sous l'exercice, au-dessus du bouton) ── */
+.fb-banner {
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-weight: 800;
+  font-size: 1rem;
+  animation: fb-in 0.22s ease-out;
+}
+.fb-banner .fb-detail {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+.fb-correct { background: #D7FFB8; color: #3C7B00; }
+.fb-wrong   { background: #FFDFE0; color: #B91C1C; }
+@keyframes fb-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Confettis de fin de session ──────────────────────────────── */
+.confetti-piece {
+  position: absolute;
+  top: -14px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0.8; transform: translate(var(--cf-x, 0px), 105vh) rotate(var(--cf-r, 360deg)); }
+}

@@ -4,11 +4,12 @@
  * L'audio n'est PAS dans le cache SW — il est stocké en IndexedDB après import manuel.
  */
 
-const VERSION = 'svenska-v19';
+const VERSION = 'svenska-v20';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
+  './tailwind.css',
   './manifest.json',
   './cards.json',
   './travel.json',
@@ -24,7 +25,6 @@ const SHELL = [
   './js/ui.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
 ];
 
