@@ -160,6 +160,18 @@ export function currentExercise() {
   return _currentExercise;
 }
 
+/**
+ * Remplace l'exercice courant par un autre mode pour la MÊME carte
+ * (ex : "je ne peux pas écouter" → bascule listen → mc). La répétition
+ * n'est pas perdue : la carte sera notée normalement.
+ */
+export function replaceExercise(mode = 'mc') {
+  const card = currentCard();
+  if (!card) return null;
+  _currentExercise = buildExercise(card, _globalState.cardStates[card.id], _allCards, mode);
+  return _currentExercise;
+}
+
 export function peekNextCard() {
   return _queue[_index + 1] ?? null;
 }

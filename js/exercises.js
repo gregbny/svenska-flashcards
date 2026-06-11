@@ -148,8 +148,8 @@ export function pickMode(card, cardState) {
  *   - mode='reverse'→ options = [textes SV], correctIndex, promptText = EN
  *   - mode='enett'  → options = ['en','ett'], correctIndex, promptText = noun sans article
  */
-export function buildExercise(card, cardState, allCards) {
-  let mode = pickMode(card, cardState);
+export function buildExercise(card, cardState, allCards, forcedMode = null) {
+  let mode = forcedMode ?? pickMode(card, cardState);
   if (mode === 'flash') return { mode, card };
 
   if (mode === 'build') {

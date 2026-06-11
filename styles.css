@@ -1,5 +1,10 @@
 /* Custom additions on top of Tailwind */
 
+/* tailwind.css est chargé AVANT ce fichier : sans !important, nos classes
+   qui posent un display (.btn-duo, .opt-btn…) écraseraient le .hidden de
+   Tailwind et les éléments masqués resteraient visibles. */
+.hidden { display: none !important; }
+
 html, body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;

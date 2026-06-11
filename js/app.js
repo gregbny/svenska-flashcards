@@ -7,7 +7,7 @@
 
 import { ui } from './ui.js';
 import { initDB, hasAudioImported, bulkPutCards, getCardCount, getMeta, setMeta } from './db.js';
-import { startSession, currentCard, currentExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen, warmupCards, awardBonusXP } from './session.js';
+import { startSession, currentCard, currentExercise, replaceExercise, peekNextCard, rateCard, sessionStats, homeCounters, masteryStats, masteryByCefr, totalSeen, warmupCards, awardBonusXP } from './session.js';
 import { runImport } from './import.js';
 import { shortGloss } from './exercises.js';
 import { playCardAudio, unlockAudio, prefetchCardAudio } from './audio.js';
@@ -421,6 +421,13 @@ async function beginStudy() {
   document.getElementById('listen-slow-btn').onclick = () => {
     const c = currentCard();
     if (c) playCardAudio(c, { rate: 0.7 });
+  };
+  document.getElementById('listen-skip-btn').onclick = () => {
+    // Audio indisponible / pas le bon moment : on bascule la même carte
+    // en QCM écrit, sans pénalité ni perte de répétition.
+    if (state.answered) return;
+    replaceExercise('mc');
+    renderExercise();
   };
   document.getElementById('enett-audio-btn').onclick = () => {
     const c = currentCard();
