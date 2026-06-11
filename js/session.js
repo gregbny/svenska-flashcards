@@ -65,7 +65,21 @@ let _allCards = []; // pool complet pour les distracteurs
 let _currentExercise = null;
 
 // ─── Session bootstrap ──────────────────────────────────────────
-export async function startSession({ target = 25, maxNew = 10 } = {}) {
+/**
+ * Combien de cartes neuves on s'autorise compte tenu de l'arriéré de
+ * révisions : plus le retard grossit, plus on ferme le robinet. Sinon
+ * les cartes déjà vues ne reviennent jamais assez vite pour se
+ * consolider (reps ≥ 2) — et les exercices riches (build/cloze)
+ * n'apparaissent jamais.
+ */
+function allowedNew(backlog, maxNew, target) {
+  if (backlog >= target * 2) return 0;                       // gros retard : 100% révisions
+  if (backlog >= target) return Math.min(2, maxNew);         // retard : filet de nouveaux
+  if (backlog >= target / 2) return Math.min(Math.ceil(maxNew / 2), maxNew);
+  return maxNew;
+}
+
+export async function startSession({ target = 25, maxNew = 6 } = {}) {
   _globalState = ensureState(loadState());
 
   const allCards = await getAllCards();
@@ -102,9 +116,16 @@ export async function startSession({ target = 25, maxNew = 10 } = {}) {
     return (a.order ?? Infinity) - (b.order ?? Infinity);
   });
 
-  const reviewSlots = Math.max(0, target - maxNew);
-  const reviews = due.slice(0, reviewSlots);
-  const fresh = newCards.slice(0, maxNew);
+  // Révisions les plus en retard d'abord. Sans ce tri, l'ordre est celui
+  // d'IndexedDB (id croissant) : les cartes "travel" (ids négatifs, sans
+  // phrase exemple) monopolisaient les places de révision.
+  due.sort((a, b) =>
+    new Date(cardStates[a.id]?.due ?? 0).getTime() -
+    new Date(cardStates[b.id]?.due ?? 0).getTime(),
+  );
+
+  const fresh = newCards.slice(0, allowedNew(due.length, maxNew, target));
+  const reviews = due.slice(0, Math.max(0, target - fresh.length));
 
   _queue = shuffle([...reviews, ...fresh]);
   _index = 0;
@@ -210,7 +231,7 @@ export async function totalSeen() {
   return Object.keys(gs.cardStates ?? {}).length;
 }
 
-export async function homeCounters({ maxNew = 10 } = {}) {
+export async function homeCounters({ target = 25, maxNew = 6 } = {}) {
   const gs = _globalState ?? ensureState(loadState());
   const allCards = await getAllCards();
   const now = Date.now();
@@ -220,7 +241,7 @@ export async function homeCounters({ maxNew = 10 } = {}) {
     if (!s) newRaw += 1;
     else if (isDue(s, now)) due += 1;
   }
-  return { newAvailable: Math.min(newRaw, maxNew), reviewsDue: due };
+  return { newAvailable: Math.min(newRaw, allowedNew(due, maxNew, target)), reviewsDue: due };
 }
 
 // ─── Rating ─────────────────────────────────────────────────────

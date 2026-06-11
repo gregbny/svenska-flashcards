@@ -118,21 +118,21 @@ export function pickMode(card, cardState) {
 
   if (reps === 0) return 'flash';
 
-  if (reps <= 2) {
+  if (reps === 1) {
     // Phase reconnaissance : mc dominant, soupçon de en/ett pour les noms
     if (noun && r < 0.15) return 'enett';
     return 'mc';
   }
 
-  // reps >= 3 : phase consolidation
-  // build 25% (si phrase exploitable) · listen · mc · reverse · enett
+  // reps >= 2 : phase consolidation — priorité aux exercices riches
+  // (build/cloze) dès qu'une phrase exemple existe (100% des A1/A2).
   const canBuild = !!sentenceTokens(card);
   const canCloze = hasExample(card);
-  if (canBuild && r < 0.20) return 'build';
-  if (canCloze && r < 0.38) return 'cloze';
-  if (hasAudio && r < 0.65) return 'listen';
-  if (r < 0.84) return 'mc';
-  if (r < 0.95) return 'reverse';
+  if (canBuild && r < 0.25) return 'build';
+  if (canCloze && r < 0.50) return 'cloze';
+  if (hasAudio && r < 0.72) return 'listen';
+  if (r < 0.88) return 'mc';
+  if (r < 0.96) return 'reverse';
   if (noun) return 'enett';
   return 'mc';
 }

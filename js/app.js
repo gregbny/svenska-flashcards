@@ -3,11 +3,6 @@
  *
  * Ce fichier orchestre les écrans et l'état global.
  * La logique métier est répartie dans les modules : db, sm2, session, audio, import.
- *
- * --- ÉTAT D'IMPLÉMENTATION ---
- * UI:               ✅ complète (index.html + styles.css)
- * Navigation:       ✅ implémentée ici
- * Logique métier:   🚧 stubs — à implémenter par Sonnet
  */
 
 import { ui } from './ui.js';
@@ -270,7 +265,7 @@ async function showHome() {
 
   const stats = sessionStats();
   const [counters, mastery] = await Promise.all([
-    homeCounters({ maxNew: 10 }),
+    homeCounters({ target: DAILY_TARGET }),
     masteryStats({ limit: 2000 }),
   ]);
   document.getElementById('mastery-count').textContent = `${mastery.seen} vues · ${mastery.mastered} maîtrisées`;
@@ -397,7 +392,7 @@ async function beginStudy() {
   // unlockAudio() a été appelé sync dans le gesture du bouton.
   // On attend la fin du unlock avant de lancer la 1re carte.
   await unlockAudio();
-  await startSession({ target: DAILY_TARGET, maxNew: 10 });
+  await startSession({ target: DAILY_TARGET });
 
   // Échauffement "matching" avant la session (sauté si pas assez de
   // cartes déjà vues — typiquement les toutes premières sessions).

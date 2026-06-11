@@ -34,7 +34,10 @@ export function sm2Apply(state, rating, now = Date.now()) {
     if (s.reps === 1) {
       s.interval = 1;
     } else if (s.reps === 2) {
-      s.interval = 6;
+      // 3j (et non 6 comme le SM-2 canonique) : la phase de consolidation
+      // (reps ≥ 3, exercices riches) devient atteignable en ~4 jours au
+      // lieu de 7 — important pour un usage à cadence irrégulière.
+      s.interval = 3;
     } else {
       s.interval = Math.round(s.interval * s.ease);
     }
