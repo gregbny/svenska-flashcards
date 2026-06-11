@@ -125,7 +125,21 @@ export async function startSession({ target = 25, maxNew = 6 } = {}) {
   );
 
   const fresh = newCards.slice(0, allowedNew(due.length, maxNew, target));
-  const reviews = due.slice(0, Math.max(0, target - fresh.length));
+  const slots = Math.max(0, target - fresh.length);
+
+  // Garantie de variété : l'arriéré contient des bandes entières de cartes
+  // jeunes (reps 1 → QCM uniquement). Pour que chaque session contienne des
+  // exercices riches (cloze/build), on promeut jusqu'à ~40% de cartes
+  // "consolidables" (reps >= 2 + phrase exemple) parmi les dues, même si
+  // elles sont moins en retard. Toutes restent dues : rien n'est avancé.
+  const isRich = (c) => {
+    const s = cardStates[c.id];
+    return (s?.reps ?? 0) >= 2 && !!c.enrichment?.example_sv && !!c.enrichment?.example_fr;
+  };
+  const rich = due.filter(isRich).slice(0, Math.min(10, Math.ceil(slots * 0.4)));
+  const richIds = new Set(rich.map((c) => c.id));
+  const rest = due.filter((c) => !richIds.has(c.id)).slice(0, slots - rich.length);
+  const reviews = [...rich, ...rest];
 
   _queue = shuffle([...reviews, ...fresh]);
   _index = 0;
